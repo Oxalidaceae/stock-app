@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: stock-app
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/stockapp
+    username: ${DB_USERNAME:stockapp}
+    password: ${DB_PASSWORD:stockapp}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+server:
+  port: 8080
+
+app:
+  dart:
+    api-key: ${DART_API_KEY}
+    base-url: https://opendart.fss.or.kr/api
+  ecos:
+    api-key: ${ECOS_API_KEY}
+    base-url: https://ecos.bok.or.kr/api
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000  # 24시간
