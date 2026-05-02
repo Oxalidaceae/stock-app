@@ -1,37 +1,117 @@
 import schedule
 import time
 import logging
+import argparse
+from datetime import date
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 
-def collect_market_data():
-    logger.info("주가 데이터 수집 시작")
-    # TODO: 주요 종목 일괄 수집
+def run_initial_setup():
+    """최초 실행 시 전체 데이터 적재. DB가 비어 있을 때 한 번만 실행."""
+    from dart.dart_pipeline   import sync_corp_codes, sync_listed_company_details
+    from market.market_pipeline import sync_stock_listing, sync_historical_prices
+    from ecos.ecos_pipeline   import sync_all_indicators
+
+    logger.info("=== 초기 데이터 적재 시작 ===")
+
+    # 1. DART 기업코드 전체 다운로드 (corp_code ↔ ticker 매핑)
+    sync_corp_codes()
+
+    # 2. KOSPI/KOSDAQ 종목 목록 (sector, industry, market 정보)
+    sync_stock_listing()
+
+    # 3. 상장사 상세정보 (CEO, 결산월 등) — 시간 소요 큼
+    sync_listed_company_details()
+
+    # 4. 한국은행 경제지표 10년치
+    sync_all_indicators(years_back=10)
+
+    # 5. 주요 지수 구성 종목 1년치 주가 (전체 적재는 너무 오래 걸려 생략)
+    #    필요 시 아래 명령어로 개별 종목 백필 가능:
+    #    python main.py --backfill --ticker 005930 --start 2020-01-01
+    logger.info("=== 초기 데이터 적재 완료 ===")
 
 
-def collect_dart_disclosures():
-    logger.info("DART 공시 수집 시작")
-    # TODO: 당일 공시 수집 및 DB 저장
+def run_daily():
+    """매일 장 마감 후 실행."""
+    from dart.dart_pipeline     import sync_disclosures
+    from market.market_pipeline import sync_daily_prices, calculate_financial_metrics
+    from ecos.ecos_pipeline     import sync_all_indicators
+
+    logger.info("=== 일별 데이터 갱신 시작 ===")
+    sync_daily_prices()
+    sync_disclosures(days_back=1)
+    sync_all_indicators(years_back=1)
+    calculate_financial_metrics()
+    logger.info("=== 일별 데이터 갱신 완료 ===")
 
 
-def collect_ecos_indicators():
-    logger.info("한국은행 경제지표 수집 시작")
-    # TODO: 주요 경제지표 수집 및 DB 저장
+def run_weekly():
+    """매주 일요일 재무제표 배치 동기화."""
+    from dart.dart_pipeline import sync_financials_batch
+    current_year = date.today().year
+
+    logger.info("=== 주간 재무제표 동기화 시작 ===")
+    sync_financials_batch(year=current_year,      report_code="11013")  # 최신 분기
+    sync_financials_batch(year=current_year - 1,  report_code="11011")  # 전년 사업보고서
+    logger.info("=== 주간 재무제표 동기화 완료 ===")
 
 
-# 스케줄 설정
-schedule.every(15).minutes.do(collect_market_data)          # 15분마다 주가 갱신
-schedule.every().day.at("18:00").do(collect_dart_disclosures)  # 장 마감 후 공시 수집
-schedule.every().day.at("09:00").do(collect_ecos_indicators)   # 매일 오전 경제지표 갱신
+def main():
+    parser = argparse.ArgumentParser(description="Stock App Data Collector")
+    parser.add_argument("--init",      action="store_true", help="초기 데이터 전체 적재")
+    parser.add_argument("--daily",     action="store_true", help="일별 갱신 즉시 실행")
+    parser.add_argument("--weekly",    action="store_true", help="주간 재무제표 즉시 실행")
+    parser.add_argument("--ecos",      action="store_true", help="경제지표만 즉시 실행")
+    parser.add_argument("--backfill",  action="store_true", help="특정 종목 과거 주가 백필")
+    parser.add_argument("--ticker",    type=str, help="백필 대상 종목코드 (예: 005930)")
+    parser.add_argument("--start",     type=str, default="2020-01-01", help="백필 시작일 (YYYY-MM-DD)")
+    parser.add_argument("--end",       type=str, default=str(date.today()), help="백필 종료일")
+    parser.add_argument("--daemon",    action="store_true", help="스케줄러 데몬 실행")
+    args = parser.parse_args()
+
+    if args.init:
+        run_initial_setup()
+        return
+
+    if args.daily:
+        run_daily()
+        return
+
+    if args.weekly:
+        run_weekly()
+        return
+
+    if args.ecos:
+        from ecos.ecos_pipeline import sync_all_indicators
+        sync_all_indicators()
+        return
+
+    if args.backfill:
+        if not args.ticker:
+            logger.error("--ticker 옵션 필요")
+            return
+        from market.market_pipeline import sync_historical_prices
+        sync_historical_prices(args.ticker, args.start, args.end)
+        return
+
+    if args.daemon:
+        logger.info("스케줄러 데몬 시작")
+        schedule.every().day.at("16:30").do(run_daily)       # 장 마감 후
+        schedule.every().sunday.at("02:00").do(run_weekly)   # 주말 새벽
+
+        while True:
+            schedule.run_pending()
+            time.sleep(60)
+        return
+
+    parser.print_help()
+
 
 if __name__ == "__main__":
-    logger.info("Collector 시작")
-    collect_market_data()
-    collect_dart_disclosures()
-    collect_ecos_indicators()
-
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+    main()
