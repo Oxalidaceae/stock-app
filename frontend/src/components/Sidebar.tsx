@@ -1,0 +1,38 @@
+import { NavLink } from 'react-router-dom'
+
+const links = [
+  { to: '/',            icon: '◉', label: 'Dashboard' },
+  { to: '/screener',    icon: '⊞', label: 'Screener' },
+  { to: '/disclosures', icon: '◫', label: 'Disclosures' },
+  { to: '/economic',    icon: '◈', label: 'Economic' },
+  { to: '/dividends',   icon: '◆', label: 'Dividends' },
+]
+
+export function Sidebar() {
+  return (
+    <aside className="app-sidebar">
+      <div className="sidebar-logo">
+        <span className="dot" />
+        STOCK APP
+      </div>
+      <nav className="sidebar-nav">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={({ isActive }) =>
+              `sidebar-link${isActive ? ' active' : ''}`
+            }
+            end={link.to === '/'}
+          >
+            <span className="icon">{link.icon}</span>
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-primary)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+        v0.1.0 · 15min delayed
+      </div>
+    </aside>
+  )
+}
