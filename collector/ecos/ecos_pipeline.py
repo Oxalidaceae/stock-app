@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import date
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -123,6 +124,7 @@ def sync_all_indicators(years_back: int = 10):
 
         try:
             sync_indicator(indicator, start, end)
+            time.sleep(1)  # API 호출 간격 유지
         except Exception as e:
             logger.error(f"지표 동기화 실패 [{indicator['stat_name']}]: {e}")
 
