@@ -17,6 +17,9 @@ export default function DisclosuresPage() {
       </div>
 
       <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-sm)' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>출처: 금융감독원 DART</span>
+        </div>
         {isLoading ? (
           <LoadingSpinner />
         ) : error ? (

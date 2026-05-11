@@ -38,10 +38,13 @@ export default function DividendCalendarPage() {
         <p className="page-subtitle">배당 기준일 기반 월별 캘린더</p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 'var(--space-xl)' }}>
-        <button className="btn btn-sm" onClick={prevMonth}>←</button>
-        <span style={{ fontSize: '1.1rem', fontWeight: 700, minWidth: 120, textAlign: 'center' }}>{year}년 {month}월</span>
-        <button className="btn btn-sm" onClick={nextMonth}>→</button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-xl)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button className="btn btn-sm" onClick={prevMonth}>←</button>
+          <span style={{ fontSize: '1.1rem', fontWeight: 700, minWidth: 120, textAlign: 'center' }}>{year}년 {month}월</span>
+          <button className="btn btn-sm" onClick={nextMonth}>→</button>
+        </div>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>출처: 금융감독원 DART</span>
       </div>
 
       {isLoading ? <LoadingSpinner /> : (

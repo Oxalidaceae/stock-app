@@ -111,6 +111,7 @@ export default function StockDetailPage() {
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="card-header">
           <span className="card-title">Price Chart</span>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 12, fontWeight: 'normal' }}>출처: FinanceDataReader</span>
           <div className="btn-group">
             {PERIODS.map((p) => (
               <button key={p} className={`btn btn-sm${period === p ? ' active' : ''}`} onClick={() => setPeriod(p)}>
@@ -124,7 +125,12 @@ export default function StockDetailPage() {
 
       {/* Metrics */}
       {metrics && (
-        <div className="grid-4" style={{ marginBottom: 'var(--space-xl)' }}>
+        <div style={{ marginBottom: 'var(--space-xl)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+            <span className="card-title" style={{ paddingLeft: 'var(--space-sm)' }}>Financial Metrics</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'normal', paddingRight: 'var(--space-sm)' }}>출처: 금융감독원 DART</span>
+          </div>
+          <div className="grid-4">
           {([
             ['PER', metrics.per],
             ['PBR', metrics.pbr],
@@ -147,6 +153,7 @@ export default function StockDetailPage() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -155,6 +162,7 @@ export default function StockDetailPage() {
         <div className="card">
           <div className="card-header">
             <span className="card-title">Recent Disclosures</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', fontWeight: 'normal' }}>출처: 금융감독원 DART</span>
           </div>
           {disclosures.content.map((d) => (
             <div key={d.id} style={{ display: 'flex', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border-primary)', fontSize: '0.8rem' }}>

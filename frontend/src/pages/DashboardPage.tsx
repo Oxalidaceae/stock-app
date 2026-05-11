@@ -42,6 +42,7 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-header">
             <span className="card-title">Recent Disclosures</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 12, fontWeight: 'normal' }}>출처: 금융감독원 DART</span>
             <button className="btn btn-sm" onClick={() => navigate('/disclosures')}>전체보기</button>
           </div>
           {discLoading ? (
@@ -72,6 +73,7 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-header">
             <span className="card-title">Economic Indicators</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 12, fontWeight: 'normal' }}>출처: 한국은행 ECOS</span>
             <button className="btn btn-sm" onClick={() => navigate('/economic')}>상세보기</button>
           </div>
           {ecoLoading ? (

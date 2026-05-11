@@ -27,8 +27,11 @@ export default function EconomicPage() {
       </div>
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="card-header">
-          <span className="card-title">{activeName}</span>
-          <span className="card-subtitle">{activeUnit}</span>
+          <div>
+            <span className="card-title">{activeName}</span>
+            <span className="card-subtitle" style={{ marginLeft: 8 }}>{activeUnit}</span>
+          </div>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>출처: 한국은행 ECOS</span>
         </div>
         {seriesLoading ? <LoadingSpinner /> : series?.length ? (
           <ResponsiveContainer width="100%" height={400}>
