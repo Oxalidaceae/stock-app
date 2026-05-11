@@ -42,6 +42,9 @@ export default function EconomicPage() {
           </ResponsiveContainer>
         ) : <ErrorFallback message="데이터가 없습니다" />}
       </div>
+      <div style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-md)', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-primary)' }}>
+        ※ 본 데이터는 한국은행 경제통계시스템(ECOS)의 Open API를 활용하였습니다. 통계 수치는 잠정치일 수 있으며, 확정치 발표 시 변경될 수 있습니다.
+      </div>
     </>
   )
 }

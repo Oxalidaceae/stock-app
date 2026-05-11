@@ -30,8 +30,11 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-primary)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-        v0.1.0 · 15min delayed
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-primary)', fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+        <div style={{ marginBottom: 4 }}>v0.1.0 · 15min delayed</div>
+        <div>경제지표: 한국은행 ECOS</div>
+        <div>공시/재무: 금융감독원 DART</div>
+        <div>주가: FinanceDataReader</div>
       </div>
     </aside>
   )
