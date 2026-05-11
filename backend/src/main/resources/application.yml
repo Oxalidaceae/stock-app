@@ -22,14 +22,25 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  cache:
+    type: redis
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
 server:
   port: 8080
+
+logging:
+  level:
+    com.stockapp: DEBUG
 
 app:
   dart:
