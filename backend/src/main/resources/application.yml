@@ -44,11 +44,11 @@ logging:
 
 app:
   dart:
-    api-key: ${DART_API_KEY}
+    api-key: ${DART_API_KEY:}
     base-url: https://opendart.fss.or.kr/api
   ecos:
-    api-key: ${ECOS_API_KEY}
+    api-key: ${ECOS_API_KEY:}
     base-url: https://ecos.bok.or.kr/api
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:default-dev-secret-change-in-production}
     expiration-ms: 86400000  # 24시간
