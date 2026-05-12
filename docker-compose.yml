@@ -70,7 +70,7 @@ services:
   collector-init:
     build: ./collector
     container_name: stockapp-collector-init
-    command: ["python", "main.py", "--init"]
+    command: ["--init"]
     environment:
       DART_API_KEY: ${DART_API_KEY}
       ECOS_API_KEY: ${ECOS_API_KEY}
@@ -93,7 +93,7 @@ services:
   collector-daemon:
     build: ./collector
     container_name: stockapp-collector-daemon
-    command: ["python", "main.py", "--daemon"]
+    command: ["--daemon"]
     restart: unless-stopped
     environment:
       DART_API_KEY: ${DART_API_KEY}
