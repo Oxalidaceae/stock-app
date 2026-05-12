@@ -1,4 +1,4 @@
-FinanceDataReader>=0.9
+git+https://github.com/FinanceData/FinanceDataReader.git
 requests>=2.32
 psycopg2-binary>=2.9
 redis>=5.0
