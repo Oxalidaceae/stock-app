@@ -11,7 +11,6 @@ import type {
   FinancialMetric,
   EconomicIndicatorSummary,
   EconomicIndicator,
-  Dividend,
   ScreenerRequest,
   ScreenerResult,
 } from '../types/api'
@@ -87,13 +86,6 @@ export const getIndicatorData = (statCode: string, start?: string, end?: string)
     .get<ApiResponse<EconomicIndicator[]>>(`/economic/indicators/${statCode}`, {
       params: { start, end },
     })
-    .then((r) => r.data.data)
-
-/* ── Dividend ─────────────────────────────── */
-
-export const getDividendCalendar = (year: number, month: number) =>
-  client
-    .get<ApiResponse<Dividend[]>>('/dividends/calendar', { params: { year, month } })
     .then((r) => r.data.data)
 
 /* ── Screener ─────────────────────────────── */

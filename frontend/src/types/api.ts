@@ -139,21 +139,6 @@ export interface EconomicIndicator {
   unit: string
 }
 
-/* ── Dividend ────────────────────────────────────────── */
-
-export interface Dividend {
-  id: number
-  ticker: string
-  companyName: string
-  fiscalYear: number
-  dividendType: string
-  exDividendDate: string | null
-  paymentDate: string | null
-  dividendPerShare: number | null
-  totalDividend: number | null
-  dividendYield: number | null
-}
-
 /* ── Screener ────────────────────────────────────────── */
 
 export interface ScreenerRequest {

@@ -16,7 +16,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid-3" style={{ marginBottom: 'var(--space-xl)' }}>
+      <div className="grid-2" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="card" style={{ cursor: 'pointer', borderColor: 'var(--accent-orange-dim)' }} onClick={() => navigate('/screener')}>
           <div className="card-title">⊞ Screener</div>
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: 8 }}>
@@ -27,12 +27,6 @@ export default function DashboardPage() {
           <div className="card-title">◈ Economic Indicators</div>
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: 8 }}>
             기준금리 · GDP · CPI · 환율
-          </div>
-        </div>
-        <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate('/dividends')}>
-          <div className="card-title">◆ Dividend Calendar</div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: 8 }}>
-            월별 배당 기준일 · 지급일 조회
           </div>
         </div>
       </div>

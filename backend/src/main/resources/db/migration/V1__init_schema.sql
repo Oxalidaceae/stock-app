@@ -140,25 +140,6 @@ CREATE TABLE economic_indicators (
 CREATE INDEX idx_economic_indicators_stat_period ON economic_indicators (stat_code, period DESC);
 
 -- =====================================================
--- 7. 배당 정보
--- =====================================================
-CREATE TABLE dividends (
-    id                  BIGSERIAL PRIMARY KEY,
-    company_id          BIGINT      NOT NULL REFERENCES companies(id),
-    fiscal_year         SMALLINT    NOT NULL,
-    dividend_type       VARCHAR(20) DEFAULT '현금배당',  -- 현금배당, 주식배당
-    ex_dividend_date    DATE,                            -- 배당기준일
-    payment_date        DATE,                            -- 배당지급일
-    dividend_per_share  INTEGER,                         -- 주당배당금 (원)
-    total_dividend      BIGINT,                          -- 총 배당금 (원)
-    dividend_yield      DECIMAL(6,2),
-    created_at          TIMESTAMP   DEFAULT NOW(),
-    UNIQUE (company_id, fiscal_year, dividend_type)
-);
-
-CREATE INDEX idx_dividends_ex_date ON dividends (ex_dividend_date DESC);
-
--- =====================================================
 -- [미래 기능] 로그인 구현 시 추가할 테이블
 -- =====================================================
 

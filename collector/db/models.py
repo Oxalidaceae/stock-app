@@ -1,8 +1,8 @@
 from sqlalchemy import (
     BigInteger, SmallInteger, String, Boolean, Date, DateTime,
-    Numeric, Text, ForeignKey, Column, Integer, CHAR
+    Numeric, ForeignKey, Column, CHAR
 )
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 
 
@@ -120,16 +120,3 @@ class EconomicIndicator(Base):
     created_at  = Column(DateTime, server_default=func.now())
 
 
-class Dividend(Base):
-    __tablename__ = "dividends"
-
-    id                 = Column(BigInteger, primary_key=True, autoincrement=True)
-    company_id         = Column(BigInteger, ForeignKey("companies.id"), nullable=False)
-    fiscal_year        = Column(SmallInteger, nullable=False)
-    dividend_type      = Column(String(20), default="현금배당")
-    ex_dividend_date   = Column(Date)
-    payment_date       = Column(Date)
-    dividend_per_share = Column(Integer)
-    total_dividend     = Column(BigInteger)
-    dividend_yield     = Column(Numeric(6, 2))
-    created_at         = Column(DateTime, server_default=func.now())

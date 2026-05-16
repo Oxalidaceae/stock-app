@@ -5,7 +5,6 @@ const links = [
   { to: '/screener',    icon: '⊞', label: 'Screener' },
   { to: '/disclosures', icon: '◫', label: 'Disclosures' },
   { to: '/economic',    icon: '◈', label: 'Economic' },
-  { to: '/dividends',   icon: '◆', label: 'Dividends' },
 ]
 
 export function Sidebar() {

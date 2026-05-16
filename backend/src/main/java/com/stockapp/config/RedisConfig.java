@@ -49,7 +49,6 @@ public class RedisConfig {
         cacheConfigurations.put("disclosures", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("financials", defaultConfig.entryTtl(Duration.ofHours(6)));
         cacheConfigurations.put("economic", defaultConfig.entryTtl(Duration.ofHours(24)));
-        cacheConfigurations.put("dividends", defaultConfig.entryTtl(Duration.ofHours(24)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
