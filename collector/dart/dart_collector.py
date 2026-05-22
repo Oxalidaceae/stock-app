@@ -113,11 +113,6 @@ def get_financial_statements(corp_code: str, year: str, report_code: str = "1101
     return data.get("list", [])
 
 
-def get_company_info(corp_code: str) -> dict:
-    params = {"crtfc_key": DART_API_KEY, "corp_code": corp_code}
-    return _dart_request(f"{DART_BASE_URL}/company.json", params)
-
-
 def get_corp_code_list() -> bytes:
     """전체 기업코드 ZIP 파일 다운로드 (DART 기업코드 - 종목코드 매핑용)"""
     params = {"crtfc_key": DART_API_KEY}

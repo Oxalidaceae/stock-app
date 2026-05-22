@@ -13,28 +13,30 @@ logger = logging.getLogger(__name__)
 
 def run_initial_setup():
     """최초 실행 시 전체 데이터 적재. DB가 비어 있을 때 한 번만 실행."""
-    from dart.dart_pipeline   import sync_corp_codes, sync_listed_company_details
-    from market.market_pipeline import sync_stock_listing, sync_historical_prices
-    from ecos.ecos_pipeline   import sync_all_indicators
+    from dart.dart_pipeline     import sync_corp_codes, sync_disclosures
+    from market.market_pipeline import sync_stock_listing, sync_daily_prices
+    from ecos.ecos_pipeline     import sync_all_indicators
 
     logger.info("=== 초기 데이터 적재 시작 ===")
 
-    # 1. DART 기업코드 전체 다운로드 (corp_code ↔ ticker 매핑)
+    # 1. DART 기업코드 (corp_code + company_name + ticker)
     sync_corp_codes()
 
-    # 2. KOSPI/KOSDAQ 종목 목록 (sector, industry, market 정보)
+    # 2. KOSPI/KOSDAQ 종목 목록 (sector, industry, market)
     sync_stock_listing()
 
-    # 3. 상장사 상세정보 (CEO, 결산월 등) — 시간 소요 큼
-    sync_listed_company_details()
-
-    # 4. 한국은행 경제지표 10년치
+    # 3. 한국은행 경제지표 10년치
     sync_all_indicators(years_back=10)
 
-    # 5. 주요 지수 구성 종목 1년치 주가 (전체 적재는 너무 오래 걸려 생략)
-    #    필요 시 아래 명령어로 개별 종목 백필 가능:
-    #    python main.py --backfill --ticker 005930 --start 2020-01-01
+    # 4. 최근 7일 공시
+    sync_disclosures(days_back=7)
+
+    # 5. 전종목 최신 주가 (직전 영업일)
+    sync_daily_prices()
+
     logger.info("=== 초기 데이터 적재 완료 ===")
+    logger.info("재무제표: 'python main.py --weekly' 로 별도 실행")
+    logger.info("과거 주가 백필: 'python main.py --backfill --ticker 005930 --start 2020-01-01'")
 
 
 def run_daily():

@@ -14,7 +14,7 @@ from db.database import get_session
 from db.models import Company, Disclosure, FinancialStatement
 from dart.dart_collector import (
     get_corp_code_list, get_disclosure_list,
-    get_financial_statements, get_company_info,
+    get_financial_statements,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,56 +59,6 @@ def _parse_corp_code_zip(content: bytes) -> list[dict]:
             "ticker":       ticker,
         })
     return [r for r in result if r["corp_code"]]
-
-
-# ── 기업 상세 정보 동기화 ─────────────────────────────────────
-
-def sync_company_detail(corp_code: str):
-    """단일 기업의 DART 상세정보(업종, CEO 등)를 가져와 업데이트."""
-    data = get_company_info(corp_code)
-    if data.get("status") != "000":
-        return
-
-    with get_session() as session:
-        stmt = pg_insert(Company).values(
-            corp_code    = corp_code,
-            company_name = data.get("corp_name", ""),
-            ticker       = data.get("stock_code") or None,
-            market       = _normalize_market(data.get("corp_cls")),
-            ceo_name     = data.get("ceo_nm"),
-            homepage     = data.get("hm_url"),
-            fiscal_month = _parse_int(data.get("acc_mt")),
-        )
-        stmt = stmt.on_conflict_do_update(
-            index_elements=["corp_code"],
-            set_={
-                "market":       stmt.excluded.market,
-                "ceo_name":     stmt.excluded.ceo_name,
-                "homepage":     stmt.excluded.homepage,
-                "fiscal_month": stmt.excluded.fiscal_month,
-            },
-        )
-        session.execute(stmt)
-
-
-def sync_listed_company_details(delay_sec: float = 0.2):
-    """ticker가 있는 상장사 전체 상세정보 동기화 (DART 호출 제한 고려)."""
-    with get_session() as session:
-        companies = session.execute(
-            session.query(Company.corp_code)
-            .filter(Company.ticker.isnot(None), Company.market.is_(None))
-            .statement
-        ).fetchall()
-
-    logger.info(f"상장사 상세정보 동기화 시작: {len(companies)}건")
-    for i, (corp_code,) in enumerate(companies):
-        try:
-            sync_company_detail(corp_code)
-            time.sleep(delay_sec)
-        except Exception as e:
-            logger.warning(f"상세정보 실패 {corp_code}: {e}")
-        if (i + 1) % 100 == 0:
-            logger.info(f"  진행중: {i + 1}/{len(companies)}")
 
 
 # ── 공시 동기화 ───────────────────────────────────────────────
@@ -237,10 +187,6 @@ def _get_company_id(corp_code: str) -> int | None:
     return row[0] if row else None
 
 
-def _normalize_market(corp_cls: str | None) -> str | None:
-    return {"Y": "KOSPI", "K": "KOSDAQ", "N": "KONEX", "E": "ETC"}.get(corp_cls or "")
-
-
 def _classify_disclosure(report_name: str) -> str:
     if any(k in report_name for k in ["사업보고서", "반기보고서", "분기보고서"]):
         return "정기공시"
@@ -265,15 +211,6 @@ def _parse_amount(s: str | None) -> int | None:
         return None
     try:
         return int(s.replace(",", "").strip())
-    except ValueError:
-        return None
-
-
-def _parse_int(s: str | None) -> int | None:
-    if not s:
-        return None
-    try:
-        return int(s.strip())
     except ValueError:
         return None
 
