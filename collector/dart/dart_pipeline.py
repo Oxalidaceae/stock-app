@@ -5,6 +5,7 @@ import logging
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 import sys, os
@@ -19,7 +20,7 @@ from dart.dart_collector import (
 
 logger = logging.getLogger(__name__)
 
-DART_BASE_URL = "https://opendart.fss.or.kr/report/viewer.do"
+DART_VIEWER_URL = "https://dart.fss.or.kr/dsaf001/main.do"
 
 
 # ── 기업 코드 동기화 ──────────────────────────────────────────
@@ -84,7 +85,7 @@ def sync_disclosures(days_back: int = 1):
             "disclosure_type": _classify_disclosure(item.get("report_nm", "")),
             "rcept_date":      _parse_date(item.get("rcept_dt")),
             "submitter":       item.get("flr_nm"),
-            "dart_url":        f"{DART_BASE_URL}?rcpNo={item.get('rcept_no')}&dcmNo={item.get('rcept_no')}",
+            "dart_url":        f"{DART_VIEWER_URL}?rcpNo={item.get('rcept_no')}",
         })
 
     if not records:
@@ -100,6 +101,23 @@ def sync_disclosures(days_back: int = 1):
         session.execute(stmt)
 
     logger.info(f"공시 동기화 완료: {len(records)}건")
+    _trim_disclosures_to_recent_dates(keep_dates=5)
+
+
+def _trim_disclosures_to_recent_dates(keep_dates: int = 5):
+    """가장 최근 N개의 distinct 날짜만 남기고 나머지는 삭제. 영업일 기준 자동 정합."""
+    with get_session() as session:
+        result = session.execute(text("""
+            DELETE FROM disclosures
+            WHERE rcept_date < (
+                SELECT MIN(d) FROM (
+                    SELECT DISTINCT rcept_date AS d FROM disclosures
+                    ORDER BY rcept_date DESC LIMIT :keep
+                ) sub
+            )
+        """), {"keep": keep_dates})
+        if result.rowcount:
+            logger.info(f"오래된 공시 {result.rowcount}건 정리 (최근 {keep_dates}일 유지)")
 
 
 # ── 재무제표 동기화 ───────────────────────────────────────────

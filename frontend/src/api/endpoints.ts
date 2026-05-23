@@ -48,10 +48,10 @@ export const getDisclosures = (ticker: string, type?: string, page = 0, size = 2
     })
     .then((r) => r.data.data)
 
-export const getRecentDisclosures = (page = 0, size = 20) =>
+export const getRecentDisclosures = (page = 0, size = 20, q = '') =>
   client
     .get<ApiResponse<PageResponse<Disclosure>>>('/disclosures/recent', {
-      params: { page, size },
+      params: { page, size, q: q || undefined },
     })
     .then((r) => r.data.data)
 

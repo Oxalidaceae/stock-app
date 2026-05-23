@@ -23,9 +23,9 @@ public class DisclosureService {
         return PageResponse.from(result);
     }
 
-    @Cacheable(value = "disclosures", key = "'recent:' + #page + ':' + #size")
-    public PageResponse<DisclosureResponse> getRecent(int page, int size) {
-        var result = disclosureRepository.findAllRecent(PageRequest.of(page, size))
+    @Cacheable(value = "disclosures", key = "'recent:' + #q + ':' + #page + ':' + #size")
+    public PageResponse<DisclosureResponse> getRecent(String q, int page, int size) {
+        var result = disclosureRepository.findAllRecent(q, PageRequest.of(page, size))
                 .map(DisclosureResponse::from);
         return PageResponse.from(result);
     }

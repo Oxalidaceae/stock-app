@@ -25,8 +25,9 @@ public class DisclosureController {
 
     @GetMapping("/recent")
     public ApiResponse<PageResponse<DisclosureResponse>> getRecent(
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(disclosureService.getRecent(page, size));
+        return ApiResponse.success(disclosureService.getRecent(q, page, size));
     }
 }

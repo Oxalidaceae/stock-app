@@ -9,9 +9,9 @@ export const useDisclosures = (ticker: string, type?: string, page = 0, size = 2
     staleTime: 5 * 60 * 1000,
   })
 
-export const useRecentDisclosures = (page = 0, size = 20) =>
+export const useRecentDisclosures = (page = 0, size = 20, q = '') =>
   useQuery({
-    queryKey: ['disclosures', 'recent', page, size],
-    queryFn: () => getRecentDisclosures(page, size),
+    queryKey: ['disclosures', 'recent', page, size, q],
+    queryFn: () => getRecentDisclosures(page, size, q),
     staleTime: 5 * 60 * 1000,
   })

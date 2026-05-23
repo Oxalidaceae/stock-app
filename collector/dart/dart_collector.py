@@ -85,17 +85,41 @@ def _dart_request(url: str, params: dict, retries: int = MAX_RETRIES) -> dict:
 
 
 def get_disclosure_list(corp_code: str = None, start_date: str = None, end_date: str = None) -> list:
-    params = {
+    """기간 내 공시 전체 수집. DART API는 호출당 100건이라 page_no를 반복 호출해 모두 가져옴."""
+    base_params = {
         "crtfc_key": DART_API_KEY,
         "bgn_de": start_date,
         "end_de": end_date,
         "page_count": 100,
     }
     if corp_code:
-        params["corp_code"] = corp_code
+        base_params["corp_code"] = corp_code
 
-    data = _dart_request(f"{DART_BASE_URL}/list.json", params)
-    return data.get("list", [])
+    all_items = []
+    page_no = 1
+    max_pages = 100  # 안전장치: 최대 10,000건
+
+    while page_no <= max_pages:
+        params = {**base_params, "page_no": page_no}
+        data = _dart_request(f"{DART_BASE_URL}/list.json", params)
+
+        items = data.get("list", [])
+        if not items:
+            break
+
+        all_items.extend(items)
+
+        total_page = int(data.get("total_page", 1))
+        if page_no >= total_page:
+            break
+
+        page_no += 1
+        time.sleep(0.1)  # 호출 간격
+
+    if page_no >= max_pages:
+        logger.warning(f"공시 페이지네이션 최대 한도({max_pages}) 도달 — 일부 누락 가능")
+
+    return all_items
 
 
 def get_financial_statements(corp_code: str, year: str, report_code: str = "11011") -> list:
