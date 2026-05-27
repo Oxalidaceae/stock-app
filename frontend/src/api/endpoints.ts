@@ -5,7 +5,6 @@ import type {
   CompanySearch,
   CompanyDetail,
   StockPrice,
-  PriceChart,
   Disclosure,
   FinancialStatement,
   FinancialMetric,
@@ -32,11 +31,6 @@ export const getCompanyDetail = (ticker: string) =>
 export const getLatestPrice = (ticker: string) =>
   client
     .get<ApiResponse<StockPrice>>(`/stocks/${ticker}/price`)
-    .then((r) => r.data.data)
-
-export const getChart = (ticker: string, period = '3M') =>
-  client
-    .get<ApiResponse<PriceChart>>(`/stocks/${ticker}/chart`, { params: { period } })
     .then((r) => r.data.data)
 
 /* ── Disclosure ───────────────────────────── */

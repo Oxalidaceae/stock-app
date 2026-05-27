@@ -1,14 +1,10 @@
 import { useParams } from 'react-router-dom'
-import { useState, useEffect, useRef } from 'react'
-import { createChart, CandlestickSeries } from 'lightweight-charts'
 import { useCompanyDetail } from '../hooks/useCompanies'
-import { useLatestPrice, useChart } from '../hooks/useStocks'
+import { useLatestPrice } from '../hooks/useStocks'
 import { useMetrics } from '../hooks/useFinancials'
 import { useDisclosures } from '../hooks/useDisclosures'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
-
-const PERIODS = ['1M', '3M', '6M', '1Y', '3Y'] as const
 
 function fmt(v: number | null | undefined): string {
   if (v == null) return '—'
@@ -22,63 +18,14 @@ function fmtDec(v: number | null | undefined, digits = 2): string {
 
 export default function StockDetailPage() {
   const { ticker } = useParams<{ ticker: string }>()
-  const [period, setPeriod] = useState<string>('3M')
-  const chartRef = useRef<HTMLDivElement>(null)
 
   const { data: company, isLoading: compLoading, error: compError } = useCompanyDetail(ticker!)
   const { data: price } = useLatestPrice(ticker!)
-  const { data: chart } = useChart(ticker!, period)
   const { data: metrics } = useMetrics(ticker!)
   const { data: disclosures } = useDisclosures(ticker!, undefined, 0, 5)
 
-  // Candlestick chart
-  useEffect(() => {
-    if (!chartRef.current || !chart?.data?.length) return
-
-    const container = chartRef.current
-    container.innerHTML = ''
-
-    const c = createChart(container, {
-      width: container.clientWidth,
-      height: 400,
-      layout: { background: { color: '#12121a' }, textColor: '#8b8fa3', fontFamily: 'IBM Plex Mono' },
-      grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
-      crosshair: { mode: 0 },
-      timeScale: { borderColor: '#1e1e2e' },
-      rightPriceScale: { borderColor: '#1e1e2e' },
-    })
-
-    const series = c.addSeries(CandlestickSeries, {
-      upColor: '#00c853',
-      downColor: '#ff1744',
-      borderUpColor: '#00c853',
-      borderDownColor: '#ff1744',
-      wickUpColor: '#00c853',
-      wickDownColor: '#ff1744',
-    })
-
-    series.setData(
-      chart.data.map((p) => ({
-        time: p.date,
-        open: p.open,
-        high: p.high,
-        low: p.low,
-        close: p.close,
-      })),
-    )
-
-    c.timeScale().fitContent()
-
-    const resizeObserver = new ResizeObserver(() => {
-      c.applyOptions({ width: container.clientWidth })
-    })
-    resizeObserver.observe(container)
-
-    return () => {
-      resizeObserver.disconnect()
-      c.remove()
-    }
-  }, [chart])
+  const tradingViewUrl = `https://kr.tradingview.com/symbols/KRX-${ticker}/`
+  const naverFinanceUrl = `https://finance.naver.com/item/main.naver?code=${ticker}`
 
   if (compLoading) return <LoadingSpinner message="기업 정보 로딩 중..." />
   if (compError) return <ErrorFallback message="기업을 찾을 수 없습니다" />
@@ -107,20 +54,28 @@ export default function StockDetailPage() {
         )}
       </div>
 
-      {/* Price Chart */}
+      {/* External Chart Links */}
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="card-header">
           <span className="card-title">Price Chart</span>
-          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 12, fontWeight: 'normal' }}>출처: FinanceDataReader</span>
-          <div className="btn-group">
-            {PERIODS.map((p) => (
-              <button key={p} className={`btn btn-sm${period === p ? ' active' : ''}`} onClick={() => setPeriod(p)}>
-                {p}
-              </button>
-            ))}
+        </div>
+        <div style={{
+          padding: 'var(--space-lg) var(--space-md)',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+        }}>
+          <div style={{ marginBottom: 'var(--space-md)', fontSize: '0.85rem' }}>
+            차트는 외부 사이트에서 확인하세요
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href={tradingViewUrl} target="_blank" rel="noopener noreferrer">
+              <button className="btn">TradingView →</button>
+            </a>
+            <a href={naverFinanceUrl} target="_blank" rel="noopener noreferrer">
+              <button className="btn">네이버 금융 →</button>
+            </a>
           </div>
         </div>
-        <div ref={chartRef} style={{ height: 400 }} />
       </div>
 
       {/* Metrics */}

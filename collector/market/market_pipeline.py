@@ -1,5 +1,5 @@
 import logging
-from datetime import date, timedelta
+from datetime import date
 
 import FinanceDataReader as fdr
 import pandas as pd
@@ -158,6 +158,9 @@ def sync_historical_prices(ticker: str, start_date: str, end_date: str):
             "close_price": close,
             "volume":      _safe_int(row.get("Volume")),
         })
+
+    if not records:
+        return
 
     with get_session() as session:
         stmt = pg_insert(StockPrice).values(records)
