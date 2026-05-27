@@ -294,7 +294,8 @@ a:hover {
   transition: background 0.1s;
 }
 
-.search-item:hover {
+.search-item:hover,
+.search-item.active {
   background: var(--bg-hover);
 }
 
