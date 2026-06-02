@@ -54,13 +54,15 @@ def run_daily():
 
 
 def run_weekly():
-    """매주 일요일 재무제표 배치 동기화."""
-    from dart.dart_pipeline import sync_financials_batch
+    """매주 일요일 재무제표 배치 동기화 + 재무지표 계산."""
+    from dart.dart_pipeline     import sync_financials_batch
+    from market.market_pipeline import calculate_financial_metrics
     current_year = date.today().year
 
     logger.info("=== 주간 재무제표 동기화 시작 ===")
     sync_financials_batch(year=current_year,      report_code="11013")  # 최신 분기
     sync_financials_batch(year=current_year - 1,  report_code="11011")  # 전년 사업보고서
+    calculate_financial_metrics()
     logger.info("=== 주간 재무제표 동기화 완료 ===")
 
 
