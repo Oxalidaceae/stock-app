@@ -80,14 +80,131 @@ def main():
                 print(f"    항목 조회 실패: {e}")
                 continue
 
-            # 항목 5개까지 출력
-            for it in items[:5]:
+            # 항목 30개까지 출력 (중복 제거)
+            seen = set()
+            unique_items = []
+            for it in items:
+                icode = it.get("ITEM_CODE1") or it.get("ITEM_CODE")
+                if icode in seen:
+                    continue
+                seen.add(icode)
+                unique_items.append(it)
+
+            for it in unique_items[:30]:
                 icode = it.get("ITEM_CODE1") or it.get("ITEM_CODE")
                 iname = it.get("ITEM_NAME1") or it.get("ITEM_NAME")
                 print(f"    ITEM_CODE={icode!s:<20}  {iname}")
-            if len(items) > 5:
-                print(f"    ... (총 {len(items)}개 항목)")
+            if len(unique_items) > 30:
+                print(f"    ... (총 {len(unique_items)}개 unique 항목)")
+
+
+def list_key_statistics():
+    """한국은행 100대 통계지표 — GDP 성장률 등 주요 지표가 stat_code와 함께 나옴."""
+    url = f"{ECOS_BASE_URL}/KeyStatisticList/{ECOS_API_KEY}/json/kr/1/100"
+    res = requests.get(url, timeout=30)
+    res.raise_for_status()
+    data = res.json()
+    rows = data.get("KeyStatisticList", {}).get("row", [])
+
+    print(f"\n{'=' * 60}")
+    print("  [100대 통계지표]")
+    print('=' * 60)
+
+    keywords_of_interest = ["성장률", "GDP", "환율", "통화", "무역", "수지"]
+    for r in rows:
+        name = r.get("KEYSTAT_NAME", "")
+        if not any(kw in name for kw in keywords_of_interest):
+            continue
+        cls = r.get("CLASS_NAME", "")
+        val = r.get("DATA_VALUE", "")
+        unit = r.get("UNIT_NAME", "")
+        cycle = r.get("CYCLE", "")
+        print(f"  [{cls}] {name}  CYCLE={cycle}")
+        print(f"    값: {val} {unit}")
+
+
+def test_combo(stat_code: str, item_code: str, period_type: str, label: str = ""):
+    """특정 stat_code/item_code 조합 실제 호출 + 데이터 있는지 확인."""
+    if period_type == "Q":
+        start = end = "2024Q1"
+    elif period_type == "D":
+        start = end = "20240115"
+    else:
+        start = end = "202401"
+
+    url = f"{ECOS_BASE_URL}/StatisticSearch/{ECOS_API_KEY}/json/kr/1/3/{stat_code}/{period_type}/{start}/{end}/{item_code}"
+    try:
+        res = requests.get(url, timeout=15)
+        data = res.json()
+    except Exception as e:
+        print(f"  ✗ {stat_code}/{item_code} [{period_type}]  요청 실패: {e}  {label}")
+        return
+
+    if "StatisticSearch" in data:
+        rows = data["StatisticSearch"].get("row", [])
+        if rows:
+            r = rows[0]
+            print(f"  ✓ {stat_code}/{item_code} [{period_type}]  값={r.get('DATA_VALUE')} ({r.get('TIME')}) {label}")
+            return
+    msg = data.get("RESULT", {}).get("MESSAGE") or "데이터 없음"
+    print(f"  ✗ {stat_code}/{item_code} [{period_type}]  {msg}  {label}")
+
+
+def test_combo_range(stat_code: str, item_code: str, period_type: str, start: str, end: str, label: str = ""):
+    """ecos_pipeline과 동일한 범위/페이지 크기로 호출 시뮬레이션."""
+    url = f"{ECOS_BASE_URL}/StatisticSearch/{ECOS_API_KEY}/json/kr/1/1000/{stat_code}/{period_type}/{start}/{end}/{item_code}"
+    try:
+        res = requests.get(url, timeout=30)
+        data = res.json()
+    except Exception as e:
+        print(f"  ✗ {stat_code}/{item_code} {start}~{end} 요청 실패: {e}")
+        return
+
+    if "StatisticSearch" in data:
+        total = data["StatisticSearch"].get("list_total_count", 0)
+        rows = data["StatisticSearch"].get("row", [])
+        if rows:
+            print(f"  ✓ {stat_code}/{item_code} {start}~{end}  total={total}, returned={len(rows)}  {label}")
+            print(f"    첫: {rows[0].get('TIME')}={rows[0].get('DATA_VALUE')}, 끝: {rows[-1].get('TIME')}={rows[-1].get('DATA_VALUE')}")
+            return
+    msg = data.get("RESULT", {}).get("MESSAGE") or "응답 형태 불명"
+    print(f"  ✗ {stat_code}/{item_code} {start}~{end}  {msg}  {label}")
+
+
+def test_fx_candidates():
+    """원/달러 환율 후보 ITEM_CODE 일괄 테스트 (단일 시점)."""
+    print(f"\n{'=' * 60}")
+    print("  [환율 후보 단일 시점 테스트]")
+    print('=' * 60)
+    candidates = [
+        ("731Y006", "0000003", "M", "원/달러 종가 15:30 (월)"),
+        ("731Y006", "0000100", "M", "원/달러 평균자료 (월)"),
+        ("731Y006", "0000200", "M", "원/달러 말일자료 (월)"),
+        ("731Y006", "0000002", "M", "원/달러 시가 (월)"),
+        ("731Y003", "0000003", "D", "원/달러 종가 15:30 (일)"),
+        ("036Y001", "0000001", "M", "원/달러 매매기준율 (구 코드)"),
+    ]
+    for combo in candidates:
+        test_combo(*combo)
+
+    print(f"\n{'=' * 60}")
+    print("  [환율 범위 호출 — pipeline과 동일 패턴]")
+    print('=' * 60)
+    print("기준금리 (정상 작동 검증용):")
+    test_combo_range("722Y001", "0101000", "M", "201601", "202612", "기준금리")
+    print("\n환율 — 시작 시점별:")
+    test_combo_range("731Y006", "0000003", "M", "201601", "202612", "10년 전체")
+    test_combo_range("731Y006", "0000003", "M", "202001", "202612", "2020~")
+    test_combo_range("731Y006", "0000003", "M", "202301", "202612", "2023~")
 
 
 if __name__ == "__main__":
     main()
+    try:
+        list_key_statistics()
+    except Exception as e:
+        print(f"\n100대 통계지표 조회 실패: {e}")
+    try:
+        test_fx_candidates()
+    except Exception as e:
+        print(f"\n환율 후보 테스트 실패: {e}")

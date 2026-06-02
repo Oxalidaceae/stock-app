@@ -23,11 +23,11 @@ INDICATORS = [
         "unit":        "%",
     },
     {
-        "stat_code":   "111Y002",
-        "stat_name":   "GDP 성장률 (실질, 전년동기비)",
-        "item_code":   "10101",
+        "stat_code":   "200Y108",
+        "stat_name":   "실질 GDP (계절조정, 분기)",
+        "item_code":   "10601",
         "period_type": "Q",
-        "unit":        "%",
+        "unit":        "십억원",
     },
     {
         "stat_code":   "901Y009",
@@ -37,23 +37,23 @@ INDICATORS = [
         "unit":        "지수",
     },
     {
-        "stat_code":   "731Y001",
-        "stat_name":   "원/달러 환율 (매매기준율)",
-        "item_code":   "0000001",
+        "stat_code":   "731Y006",
+        "stat_name":   "원/달러 환율 (종가 15:30)",
+        "item_code":   "0000003",
         "period_type": "M",
         "unit":        "원",
     },
     {
-        "stat_code":   "101Y002",
-        "stat_name":   "통화량 M2",
+        "stat_code":   "161Y005",
+        "stat_name":   "통화량 M2 (평잔, 계절조정)",
         "item_code":   "BBHS00",
         "period_type": "M",
         "unit":        "십억원",
     },
     {
-        "stat_code":   "403Y001",
-        "stat_name":   "무역수지",
-        "item_code":   "S27S000S10",
+        "stat_code":   "301Y017",
+        "stat_name":   "경상수지 (계절조정)",
+        "item_code":   "SA000",
         "period_type": "M",
         "unit":        "백만달러",
     },
@@ -74,7 +74,16 @@ def sync_indicator(indicator: dict, start_period: str, end_period: str):
         return
 
     records = []
+    seen_periods = set()
     for row in rows:
+        period = row.get("TIME", "")
+        # ECOS가 가끔 같은 (stat_code, item_code, period) 키에 여러 row를 반환함
+        # (예: 환율 731Y006/0000003에서 매월 2건). UNIQUE 제약 충돌 방지를 위해
+        # 같은 period의 첫 row만 사용.
+        if period in seen_periods:
+            continue
+        seen_periods.add(period)
+
         raw_value = row.get("DATA_VALUE", "").strip()
         try:
             value = float(raw_value) if raw_value else None
@@ -86,7 +95,7 @@ def sync_indicator(indicator: dict, start_period: str, end_period: str):
             "stat_name":   indicator["stat_name"],
             "item_code":   indicator["item_code"],
             "item_name":   row.get("ITEM_NAME1", indicator["stat_name"]),
-            "period":      row.get("TIME", ""),
+            "period":      period,
             "period_type": indicator["period_type"],
             "value":       value,
             "unit":        indicator["unit"],
