@@ -134,14 +134,25 @@ def sync_financial_statements_for(corp_code: str, year: int, report_code: str = 
         return
 
     records = []
+    seen_keys = set()
     for item in items:
+        # DART 응답에 fs_div가 누락되는 경우가 있어 요청 시 값(CFS)으로 보정
+        fs_div = item.get("fs_div") or "CFS"
+        account_id = item.get("account_id", "")
+        # ON CONFLICT 충돌 방지 — DART가 같은 (fs_div, account_id)에
+        # 여러 row를 반환하는 경우(sj_div만 다르고 계정ID 동일 등) 첫 row만 사용.
+        key = (fs_div, account_id)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+
         try:
             records.append({
                 "company_id":       company_id,
                 "fiscal_year":      year,
                 "report_code":      report_code,
-                "fs_div":           item.get("fs_div", ""),
-                "account_id":       item.get("account_id"),
+                "fs_div":           fs_div,
+                "account_id":       account_id,
                 "account_name":     item.get("account_nm", ""),
                 "current_amount":   _parse_amount(item.get("thstrm_amount")),
                 "previous_amount":  _parse_amount(item.get("frmtrm_amount")),

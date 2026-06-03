@@ -216,20 +216,23 @@ def calculate_financial_metrics():
             continue
         processed.add(company_id)
 
-        stmt_data = _get_statement_data(company_id, fiscal_year, report_code)
-        close_price = _get_latest_close(company_id)
+        try:
+            stmt_data = _get_statement_data(company_id, fiscal_year, report_code)
+            close_price = _get_latest_close(company_id)
 
-        if not stmt_data or not close_price:
-            continue
+            if not stmt_data or not close_price:
+                continue
 
-        metric = _compute_metrics(stmt_data, close_price)
-        metric.update({
-            "company_id":  company_id,
-            "base_date":   today,
-            "fiscal_year": fiscal_year,
-            "report_code": report_code,
-        })
-        records.append(metric)
+            metric = _compute_metrics(stmt_data, close_price)
+            metric.update({
+                "company_id":  company_id,
+                "base_date":   today,
+                "fiscal_year": fiscal_year,
+                "report_code": report_code,
+            })
+            records.append(metric)
+        except Exception as e:
+            logger.warning(f"메트릭 계산 실패 company_id={company_id}: {e}")
 
     if not records:
         logger.info("계산할 지표 없음")
@@ -293,6 +296,15 @@ def _compute_metrics(data: dict, close_price: int) -> dict:
         except (TypeError, ZeroDivisionError):
             return None
 
+    def pct(a, b):
+        """a * 100 / b 의 None 안전 버전 (퍼센트 지표 계산용)."""
+        if a is None or not b:
+            return None
+        try:
+            return round(a * 100 / b, 2)
+        except (TypeError, ZeroDivisionError):
+            return None
+
     revenue          = data.get("revenue")
     operating_income = data.get("operating_income")
     net_income       = data.get("net_income")
@@ -307,11 +319,11 @@ def _compute_metrics(data: dict, close_price: int) -> dict:
         "per":              safe_div(close_price, eps),
         "pbr":              safe_div(close_price, bps),
         "psr":              safe_div(close_price * 1000, revenue) if revenue else None,
-        "roe":              safe_div(net_income * 100, total_equity),
-        "roa":              safe_div(net_income * 100, total_assets),
-        "operating_margin": safe_div(operating_income * 100, revenue),
-        "net_margin":       safe_div(net_income * 100, revenue),
-        "debt_ratio":       safe_div(total_debt * 100, total_equity) if total_debt else None,
+        "roe":              pct(net_income, total_equity),
+        "roa":              pct(net_income, total_assets),
+        "operating_margin": pct(operating_income, revenue),
+        "net_margin":       pct(net_income, revenue),
+        "debt_ratio":       pct(total_debt, total_equity),
         "eps":              eps,
         "bps":              bps,
         "revenue":          revenue,
