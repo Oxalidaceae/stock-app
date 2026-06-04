@@ -1,6 +1,7 @@
 import { useRecentDisclosures } from '../hooks/useDisclosures'
 import { useIndicatorList } from '../hooks/useEconomic'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { WatchlistCard } from '../components/WatchlistCard'
 import { useNavigate } from 'react-router-dom'
 
 export default function DashboardPage() {
@@ -14,6 +15,9 @@ export default function DashboardPage() {
         <h1 className="page-title">Market Overview</h1>
         <p className="page-subtitle">대한민국 주식시장 투자 정보 종합 대시보드</p>
       </div>
+
+      {/* My Watchlist (관심 종목이 있을 때만 표시) */}
+      <WatchlistCard />
 
       {/* Quick Actions */}
       <div className="grid-2" style={{ marginBottom: 'var(--space-xl)' }}>

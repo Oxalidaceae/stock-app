@@ -1,8 +1,9 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useCompanyDetail } from '../hooks/useCompanies'
 import { useLatestPrice } from '../hooks/useStocks'
 import { useMetrics } from '../hooks/useFinancials'
 import { useDisclosures } from '../hooks/useDisclosures'
+import { useWatchlistStore } from '../stores/watchlistStore'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
 
@@ -18,11 +19,14 @@ function fmtDec(v: number | null | undefined, digits = 2): string {
 
 export default function StockDetailPage() {
   const { ticker } = useParams<{ ticker: string }>()
+  const navigate = useNavigate()
 
   const { data: company, isLoading: compLoading, error: compError } = useCompanyDetail(ticker!)
   const { data: price } = useLatestPrice(ticker!)
   const { data: metrics } = useMetrics(ticker!)
   const { data: disclosures } = useDisclosures(ticker!, undefined, 0, 5)
+  const inWatchlist = useWatchlistStore((s) => (ticker ? s.tickers.includes(ticker) : false))
+  const toggleWatchlist = useWatchlistStore((s) => s.toggle)
 
   const tradingViewUrl = `https://kr.tradingview.com/symbols/KRX-${ticker}/`
   const naverFinanceUrl = `https://finance.naver.com/item/main.naver?code=${ticker}`
@@ -35,9 +39,32 @@ export default function StockDetailPage() {
       {/* Header */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 className="page-title">
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={() => ticker && toggleWatchlist(ticker)}
+              title={inWatchlist ? '관심 종목에서 제거' : '관심 종목에 추가'}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.4rem',
+                color: inWatchlist ? 'var(--accent-orange)' : 'var(--text-muted)',
+                padding: 0,
+                lineHeight: 1,
+              }}
+            >
+              {inWatchlist ? '★' : '☆'}
+            </button>
             {company?.companyName}
-            <span style={{ color: 'var(--accent-orange)', marginLeft: 12, fontSize: '1rem' }}>{ticker}</span>
+            <span style={{ color: 'var(--accent-orange)', fontSize: '1rem' }}>{ticker}</span>
+            <button
+              onClick={() => ticker && navigate(`/compare?tickers=${ticker}`)}
+              title="비교 페이지로"
+              className="btn btn-sm"
+              style={{ marginLeft: 8, fontSize: '0.7rem' }}
+            >
+              ⇄ 비교
+            </button>
           </h1>
           <p className="page-subtitle">
             {company?.market && <span className={`badge badge-${company.market.toLowerCase()}`}>{company.market}</span>}
