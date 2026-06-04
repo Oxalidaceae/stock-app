@@ -105,9 +105,13 @@ def main():
         return
 
     if args.daemon:
-        logger.info("스케줄러 데몬 시작")
+        from datetime import datetime
+        logger.info(f"스케줄러 데몬 시작 (현재 시각: {datetime.now()})")
         schedule.every().day.at("16:30").do(run_daily)       # 장 마감 후
         schedule.every().sunday.at("02:00").do(run_weekly)   # 주말 새벽
+
+        for job in schedule.get_jobs():
+            logger.info(f"  등록: 다음 실행 {job.next_run}  →  {job.job_func.__name__}")
 
         while True:
             schedule.run_pending()

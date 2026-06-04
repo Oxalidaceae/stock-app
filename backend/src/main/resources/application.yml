@@ -23,13 +23,15 @@ spring:
     baseline-on-migrate: true
 
   cache:
-    type: redis
+    type: none   # RedisConfig에서 NoOpCacheManager 사용 — Jackson 직렬화 이슈로 임시 비활성
 
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+      repositories:
+        enabled: false   # Spring Data Redis Repository 스캐닝 비활성 (JPA 전용 프로젝트)
 
   jackson:
     serialization:

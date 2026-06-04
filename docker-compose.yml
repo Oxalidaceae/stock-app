@@ -66,12 +66,13 @@ services:
     depends_on:
       - backend
 
-  # ── Python Collector (일회성 초기화) ──────────
+  # ── Python Collector (일회성 초기화 — 수동 실행) ──────────
   collector-init:
     build: ./collector
     container_name: stockapp-collector-init
     command: ["--init"]
     environment:
+      TZ: Asia/Seoul
       DART_API_KEY: ${DART_API_KEY}
       ECOS_API_KEY: ${ECOS_API_KEY}
       DB_HOST: postgres
@@ -89,13 +90,14 @@ services:
     profiles:
       - init
 
-  # ── Python Collector (데몬 — 일/주 스케줄) ────
+  # ── Python Collector (스케줄 데몬 — 매일 16:30, 일요일 02:00) ────
   collector-daemon:
     build: ./collector
     container_name: stockapp-collector-daemon
     command: ["--daemon"]
     restart: unless-stopped
     environment:
+      TZ: Asia/Seoul
       DART_API_KEY: ${DART_API_KEY}
       ECOS_API_KEY: ${ECOS_API_KEY}
       DB_HOST: postgres
@@ -110,8 +112,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    profiles:
-      - daemon
 
 volumes:
   pgdata:
