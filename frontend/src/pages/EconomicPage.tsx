@@ -1,8 +1,94 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useIndicatorList, useIndicatorData } from '../hooks/useEconomic'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
+
+/**
+ * ECOS period 문자열을 사람이 읽기 쉽게 변환.
+ *   "2024"     → "2024"      (연)
+ *   "202401"   → "2024-01"   (월)
+ *   "2024Q1"   → "2024 Q1"   (분기)
+ *   "20240115" → "2024-01-15" (일)
+ */
+function formatPeriod(period: string): string {
+  if (!period) return ''
+  if (/^\d{8}$/.test(period)) {
+    return `${period.slice(0, 4)}-${period.slice(4, 6)}-${period.slice(6, 8)}`
+  }
+  if (/^\d{6}$/.test(period)) {
+    return `${period.slice(0, 4)}-${period.slice(4, 6)}`
+  }
+  if (/^\d{4}Q\d$/.test(period)) {
+    return `${period.slice(0, 4)} ${period.slice(4)}`
+  }
+  return period
+}
+
+interface ChartPoint {
+  period: string
+  value: number | null
+  pctChange: number | null
+  absChange: number | null
+}
+
+function periodLabel(periodType: string | undefined): string {
+  if (periodType === 'D') return '전일 대비'
+  if (periodType === 'Q') return '전분기 대비'
+  if (periodType === 'A') return '전년 대비'
+  return '전월 대비'
+}
+
+interface TooltipPayload {
+  payload: ChartPoint
+}
+
+function ChangeTooltip(props: {
+  active?: boolean
+  payload?: TooltipPayload[]
+  label?: string | number
+  unit: string
+  changeLabel: string
+}) {
+  const { active, payload, label, unit, changeLabel } = props
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  const { value, pctChange, absChange } = d
+
+  const color =
+    pctChange == null ? '#8b8fa3'
+    : pctChange > 0 ? '#00c853'
+    : pctChange < 0 ? '#ff1744'
+    : '#8b8fa3'
+  const sign = pctChange != null && pctChange > 0 ? '+' : ''
+
+  return (
+    <div style={{
+      background: '#12121a',
+      border: '1px solid #2a2a3a',
+      borderRadius: 6,
+      padding: '8px 12px',
+      fontSize: 12,
+      fontVariantNumeric: 'tabular-nums',
+    }}>
+      <div style={{ color: '#8b8fa3', marginBottom: 4 }}>{formatPeriod(String(label ?? ''))}</div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>
+        {value != null ? value.toLocaleString() : '—'}
+        <span style={{ color: '#8b8fa3', fontSize: 11, marginLeft: 4 }}>{unit}</span>
+      </div>
+      {pctChange != null && (
+        <div style={{ color, marginTop: 4 }}>
+          {changeLabel}: {sign}{pctChange.toFixed(2)}%
+          {absChange != null && (
+            <span style={{ marginLeft: 6, opacity: 0.8 }}>
+              ({sign}{absChange.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function EconomicPage() {
   const { data: indicators, isLoading: listLoading } = useIndicatorList()
@@ -11,6 +97,23 @@ export default function EconomicPage() {
   const { data: series, isLoading: seriesLoading } = useIndicatorData(activeCode)
   const activeName = indicators?.find(i => i.statCode === activeCode)?.statName || ''
   const activeUnit = indicators?.find(i => i.statCode === activeCode)?.unit || ''
+  const activePeriodType = series?.[0]?.periodType
+  const changeLabel = periodLabel(activePeriodType)
+
+  // 전기 대비 변화량/변화율 계산
+  const chartData: ChartPoint[] = useMemo(() => {
+    if (!series) return []
+    return series.map((d, i) => {
+      const prev = i > 0 ? series[i - 1].value : null
+      let pctChange: number | null = null
+      let absChange: number | null = null
+      if (d.value != null && prev != null && prev !== 0) {
+        absChange = d.value - prev
+        pctChange = (absChange / prev) * 100
+      }
+      return { period: d.period, value: d.value, pctChange, absChange }
+    })
+  }, [series])
 
   if (listLoading) return <LoadingSpinner />
 
@@ -33,13 +136,23 @@ export default function EconomicPage() {
           </div>
           <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>출처: 한국은행 ECOS</span>
         </div>
-        {seriesLoading ? <LoadingSpinner /> : series?.length ? (
+        {seriesLoading ? <LoadingSpinner /> : chartData.length ? (
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={series.map(d => ({ period: d.period, value: d.value }))}>
+            <LineChart data={chartData}>
               <CartesianGrid stroke="#1e1e2e" strokeDasharray="3 3" />
-              <XAxis dataKey="period" tick={{ fill: '#8b8fa3', fontSize: 11 }} axisLine={{ stroke: '#1e1e2e' }} tickLine={false} />
+              <XAxis
+                dataKey="period"
+                tick={{ fill: '#8b8fa3', fontSize: 11 }}
+                axisLine={{ stroke: '#1e1e2e' }}
+                tickLine={false}
+                tickFormatter={formatPeriod}
+                minTickGap={40}
+              />
               <YAxis tick={{ fill: '#8b8fa3', fontSize: 11 }} axisLine={{ stroke: '#1e1e2e' }} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#12121a', border: '1px solid #2a2a3a', borderRadius: 6, fontSize: 12 }} />
+              <Tooltip
+                cursor={{ stroke: '#2a2a3a', strokeWidth: 1 }}
+                content={(p: any) => <ChangeTooltip {...p} unit={activeUnit} changeLabel={changeLabel} />}
+              />
               <Line type="monotone" dataKey="value" stroke="#ff6600" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>

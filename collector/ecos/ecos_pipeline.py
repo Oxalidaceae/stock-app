@@ -37,10 +37,10 @@ INDICATORS = [
         "unit":        "지수",
     },
     {
-        "stat_code":   "731Y006",
-        "stat_name":   "원/달러 환율 (종가 15:30)",
+        "stat_code":   "731Y003",
+        "stat_name":   "원/달러 환율 (일별 종가 15:30)",
         "item_code":   "0000003",
-        "period_type": "M",
+        "period_type": "D",
         "unit":        "원",
     },
     {
@@ -127,7 +127,10 @@ def sync_all_indicators(years_back: int = 10):
         elif period_type == "Q":
             start = f"{start_year}Q1"
             end   = f"{current_year}Q4"
-        else:  # M, D
+        elif period_type == "D":
+            start = f"{start_year}0101"
+            end   = f"{current_year}1231"
+        else:  # M
             start = f"{start_year}01"
             end   = f"{current_year}12"
 

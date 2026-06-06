@@ -50,8 +50,8 @@ def _throttle():
 
 
 def get_stat_data(stat_code: str, item_code: str, start_period: str, end_period: str, period_type: str = "M") -> list:
-    # 1/1000: page=1, count=1000 — 10년치 월별(120건)·분기(40건) 모두 단일 호출로 커버
-    url = f"{ECOS_BASE_URL}/StatisticSearch/{ECOS_API_KEY}/json/kr/1/1000/{stat_code}/{period_type}/{start_period}/{end_period}/{item_code}"
+    # 1/5000: page=1, count=5000 — 10년치 일별(약 2500건)도 단일 호출로 커버
+    url = f"{ECOS_BASE_URL}/StatisticSearch/{ECOS_API_KEY}/json/kr/1/5000/{stat_code}/{period_type}/{start_period}/{end_period}/{item_code}"
 
     for attempt in range(1, MAX_RETRIES + 1):
         _throttle()
