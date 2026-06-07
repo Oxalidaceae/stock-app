@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCompanyDetail } from '../hooks/useCompanies'
 import { useLatestPrice } from '../hooks/useStocks'
 import { useMetrics } from '../hooks/useFinancials'
+import { CompanySearchInput } from '../components/CompanySearchInput'
 
 const MAX_COMPARE = 4
 
@@ -114,23 +114,14 @@ export default function ComparePage() {
     .filter(Boolean)
     .slice(0, MAX_COMPARE)
 
-  const [input, setInput] = useState('')
-
   const update = (next: string[]) => {
     if (next.length === 0) setSearchParams({})
     else setSearchParams({ tickers: next.join(',') })
   }
 
-  const add = () => {
-    const t = input.trim()
-    if (!t) return
-    if (tickers.includes(t)) {
-      setInput('')
-      return
-    }
-    if (tickers.length >= MAX_COMPARE) return
-    update([...tickers, t])
-    setInput('')
+  const add = (ticker: string) => {
+    if (!ticker || tickers.includes(ticker) || tickers.length >= MAX_COMPARE) return
+    update([...tickers, ticker])
   }
 
   const remove = (t: string) => update(tickers.filter((x) => x !== t))
@@ -149,34 +140,16 @@ export default function ComparePage() {
       </div>
 
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            add()
-          }}
-          style={{ display: 'flex', gap: 8 }}
-        >
-          <input
-            className="form-input"
-            type="text"
-            placeholder="종목코드 입력 (예: 005930)"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button
-            type="submit"
-            className="btn btn-sm"
-            disabled={tickers.length >= MAX_COMPARE || !input.trim()}
-          >
-            추가
-          </button>
-        </form>
-        {tickers.length >= MAX_COMPARE && (
-          <div style={{ marginTop: 8, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            최대 {MAX_COMPARE}개까지 비교 가능합니다
-          </div>
-        )}
+        <CompanySearchInput
+          placeholder={
+            tickers.length >= MAX_COMPARE
+              ? `최대 ${MAX_COMPARE}개까지 비교 가능합니다`
+              : '회사명 또는 종목코드로 검색해서 추가...'
+          }
+          excludeTickers={tickers}
+          disabled={tickers.length >= MAX_COMPARE}
+          onSelect={(c) => add(c.ticker)}
+        />
       </div>
 
       {tickers.length === 0 ? (
