@@ -33,4 +33,7 @@ public class ScreenerRequest {
     private String sortDir = "asc";      // asc, desc
     private int page = 0;
     private int size = 20;
+
+    // 적자 종목(PER/PBR 음수) 포함 여부 — 기본은 제외하여 일반적 의미의 저평가 분석에 집중
+    private boolean includeNegativeValuation = false;
 }

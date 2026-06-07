@@ -7,12 +7,14 @@ import type { ScreenerRequest } from '../types/api'
 export default function ScreenerPage() {
   const navigate = useNavigate()
   const { mutate, data, isPending } = useScreener()
-  const [form, setForm] = useState<ScreenerRequest>({ market: '', perMax: undefined, roeMin: undefined, dividendYieldMin: undefined, debtRatioMax: undefined, sortBy: 'per', sortDir: 'asc', page: 0, size: 30 })
+  const [form, setForm] = useState<ScreenerRequest>({ market: undefined, perMax: undefined, roeMin: undefined, dividendYieldMin: undefined, debtRatioMax: undefined, sortBy: 'per', sortDir: 'asc', page: 0, size: 30, includeNegativeValuation: false })
 
   const update = (key: string, val: string) => {
     const num = val === '' ? undefined : Number(val)
     setForm(f => ({ ...f, [key]: key === 'market' || key === 'sortBy' || key === 'sortDir' ? (val || undefined) : num }))
   }
+
+  const toggleNeg = () => setForm(f => ({ ...f, includeNegativeValuation: !f.includeNegativeValuation }))
 
   const search = (page = 0) => { mutate({ ...form, page }) }
 
@@ -60,6 +62,15 @@ export default function ScreenerPage() {
             </select>
           </div>
           <button className="btn btn-primary" onClick={() => search()} style={{ height: 34 }}>검색</button>
+        </div>
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!form.includeNegativeValuation} onChange={toggleNeg} />
+            적자 종목(PER/PBR 음수) 포함
+          </label>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            기본은 PER/PBR 정렬 시 양수만 — 일반적 의미의 저평가 분석에 집중
+          </span>
         </div>
       </div>
 

@@ -6,6 +6,8 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
+
 public class FinancialMetricSpec {
 
     private FinancialMetricSpec() {
@@ -14,7 +16,7 @@ public class FinancialMetricSpec {
     public static Specification<FinancialMetric> fromRequest(ScreenerRequest request) {
         Specification<FinancialMetric> spec = Specification.where(null);
 
-        if (request.getMarket() != null) {
+        if (request.getMarket() != null && !request.getMarket().isBlank()) {
             spec = spec.and((root, query, cb) -> {
                 Join<?, ?> company = root.join("company", JoinType.INNER);
                 return cb.equal(company.get("market"), request.getMarket());
@@ -61,6 +63,18 @@ public class FinancialMetricSpec {
         if (request.getOperatingMarginMin() != null) {
             spec = spec.and((root, query, cb) ->
                     cb.greaterThanOrEqualTo(root.get("operatingMargin"), request.getOperatingMarginMin()));
+        }
+
+        // PER/PBR 정렬 시 적자 종목(음수) 자동 제외 — 의미 있는 저평가 분석에 집중
+        if (!request.isIncludeNegativeValuation()) {
+            String sortBy = request.getSortBy();
+            if ("per".equalsIgnoreCase(sortBy)) {
+                spec = spec.and((root, query, cb) ->
+                        cb.greaterThan(root.get("per"), BigDecimal.ZERO));
+            } else if ("pbr".equalsIgnoreCase(sortBy)) {
+                spec = spec.and((root, query, cb) ->
+                        cb.greaterThan(root.get("pbr"), BigDecimal.ZERO));
+            }
         }
 
         return spec;

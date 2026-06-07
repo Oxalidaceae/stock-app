@@ -141,6 +141,7 @@ export interface ScreenerRequest {
   sortDir?: string
   page?: number
   size?: number
+  includeNegativeValuation?: boolean
 }
 
 export interface ScreenerResult {
