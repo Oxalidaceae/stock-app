@@ -148,7 +148,16 @@ export default function EconomicPage() {
                 tickFormatter={formatPeriod}
                 minTickGap={40}
               />
-              <YAxis tick={{ fill: '#8b8fa3', fontSize: 11 }} axisLine={{ stroke: '#1e1e2e' }} tickLine={false} />
+              <YAxis
+                tick={{ fill: '#8b8fa3', fontSize: 11 }}
+                axisLine={{ stroke: '#1e1e2e' }}
+                tickLine={false}
+                domain={[
+                  (dataMin: number) => Math.floor(dataMin - Math.abs(dataMin) * 0.02),
+                  (dataMax: number) => Math.ceil(dataMax + Math.abs(dataMax) * 0.02),
+                ]}
+                allowDataOverflow={false}
+              />
               <Tooltip
                 cursor={{ stroke: '#2a2a3a', strokeWidth: 1 }}
                 content={(p: any) => <ChangeTooltip {...p} unit={activeUnit} changeLabel={changeLabel} />}
