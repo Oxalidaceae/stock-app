@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useThemeStore } from '../stores/themeStore'
 
 const links = [
   { to: '/',            icon: '◉', label: 'Dashboard' },
@@ -9,6 +10,9 @@ const links = [
 ]
 
 export function Sidebar() {
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggle)
+
   return (
     <aside className="app-sidebar">
       <div className="sidebar-logo">
@@ -30,6 +34,30 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* 테마 토글 */}
+      <button
+        onClick={toggleTheme}
+        title={theme === 'dark' ? '라이트 모드로' : '다크 모드로'}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          margin: '8px 12px',
+          padding: '8px 12px',
+          background: 'transparent',
+          border: '1px solid var(--border-primary)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          fontSize: '0.75rem',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        <span style={{ fontSize: '0.9rem' }}>{theme === 'dark' ? '☀' : '☾'}</span>
+        {theme === 'dark' ? 'Light' : 'Dark'}
+      </button>
+
       <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-primary)', fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
         <div style={{ marginBottom: 4 }}>v0.1.0 · 15min delayed</div>
         <div>경제지표: 한국은행 ECOS</div>
