@@ -7,6 +7,7 @@ const links = [
   { to: '/compare',     icon: '⇄', label: 'Compare' },
   { to: '/disclosures', icon: '◫', label: 'Disclosures' },
   { to: '/economic',    icon: '◈', label: 'Economic' },
+  { to: '/macro',       icon: '◇', label: 'Macro' },
 ]
 
 export function Sidebar() {

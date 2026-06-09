@@ -2,6 +2,7 @@ import { useRecentDisclosures } from '../hooks/useDisclosures'
 import { useIndicatorList } from '../hooks/useEconomic'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { WatchlistCard } from '../components/WatchlistCard'
+import { SyncStatusCard } from '../components/SyncStatusCard'
 import { useNavigate } from 'react-router-dom'
 
 export default function DashboardPage() {
@@ -16,6 +17,9 @@ export default function DashboardPage() {
         <p className="page-subtitle">대한민국 주식시장 투자 정보 종합 대시보드</p>
       </div>
 
+      {/* Data Sync Status */}
+      <SyncStatusCard />
+
       {/* My Watchlist (관심 종목이 있을 때만 표시) */}
       <WatchlistCard />
 
@@ -27,10 +31,10 @@ export default function DashboardPage() {
             PER · PBR · ROE 조건으로 종목 필터링
           </div>
         </div>
-        <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate('/economic')}>
-          <div className="card-title">◈ Economic Indicators</div>
+        <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate('/macro')}>
+          <div className="card-title">◇ Macro Economics</div>
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: 8 }}>
-            기준금리 · GDP · CPI · 환율
+            한국은행 100대 통계지표 — 시장금리·환율·통화량·성장률 한눈에
           </div>
         </div>
       </div>

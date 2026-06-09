@@ -40,6 +40,23 @@ spring:
 server:
   port: 8080
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized  # 익명: 단순 UP/DOWN, 내부망: 상세
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+
 logging:
   level:
     com.stockapp: DEBUG

@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db.database import get_session
 from db.models import Company, Disclosure, FinancialStatement
+from db.sync_status import record_sync
 from dart.dart_collector import (
     get_corp_code_list, get_disclosure_list,
     get_financial_statements,
@@ -102,6 +103,7 @@ def sync_disclosures(days_back: int = 1):
 
     logger.info(f"공시 동기화 완료: {len(records)}건")
     _trim_disclosures_to_recent_dates(keep_dates=5)
+    record_sync("disclosures", records=len(records))
 
 
 def _trim_disclosures_to_recent_dates(keep_dates: int = 5):

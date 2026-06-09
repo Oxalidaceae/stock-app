@@ -120,3 +120,16 @@ class EconomicIndicator(Base):
     created_at  = Column(DateTime, server_default=func.now())
 
 
+class MacroKeystat(Base):
+    __tablename__ = "macro_keystats"
+
+    id           = Column(BigInteger, primary_key=True, autoincrement=True)
+    class_name   = Column(String(50),  nullable=False)
+    keystat_name = Column(String(100), nullable=False)
+    value        = Column(String(50))
+    unit         = Column(String(20))
+    cycle        = Column(String(20))
+    sort_order   = Column(BigInteger)
+    updated_at   = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+

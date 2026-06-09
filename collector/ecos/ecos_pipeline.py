@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db.database import get_session
 from db.models import EconomicIndicator
+from db.sync_status import record_sync
 from ecos.ecos_collector import get_stat_data
 
 logger = logging.getLogger(__name__)
@@ -141,3 +142,4 @@ def sync_all_indicators(years_back: int = 10):
             logger.error(f"지표 동기화 실패 [{indicator['stat_name']}]: {e}")
 
     logger.info("경제지표 동기화 완료")
+    record_sync("ecos_indicators")

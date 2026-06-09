@@ -104,6 +104,28 @@ export interface FinancialMetric {
   totalEquity: number | null
 }
 
+/* ── Sync Status ──────────────────────────────────────── */
+
+export interface SyncStatus {
+  jobName: string
+  lastRunAt: string
+  status: 'success' | 'failed' | 'partial'
+  records: number | null
+  durationMs: number | null
+  message: string | null
+}
+
+/* ── Macro Keystats ───────────────────────────────────── */
+
+export interface MacroKeystat {
+  className: string
+  keystatName: string
+  value: string | null
+  unit: string | null
+  cycle: string | null
+  updatedAt: string | null
+}
+
 /* ── Economic ────────────────────────────────────────── */
 
 export interface EconomicIndicatorSummary {

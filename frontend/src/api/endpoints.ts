@@ -10,6 +10,8 @@ import type {
   FinancialMetric,
   EconomicIndicatorSummary,
   EconomicIndicator,
+  MacroKeystat,
+  SyncStatus,
   ScreenerRequest,
   ScreenerResult,
 } from '../types/api'
@@ -80,6 +82,20 @@ export const getIndicatorData = (statCode: string, start?: string, end?: string)
     .get<ApiResponse<EconomicIndicator[]>>(`/economic/indicators/${statCode}`, {
       params: { start, end },
     })
+    .then((r) => r.data.data)
+
+/* ── Macro ────────────────────────────────── */
+
+export const getMacroKeystats = () =>
+  client
+    .get<ApiResponse<MacroKeystat[]>>('/macro/keystats')
+    .then((r) => r.data.data)
+
+/* ── Sync Status ──────────────────────────── */
+
+export const getSyncStatus = () =>
+  client
+    .get<ApiResponse<SyncStatus[]>>('/status/sync')
     .then((r) => r.data.data)
 
 /* ── Screener ─────────────────────────────── */

@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db.database import get_session
 from db.models import Company, StockPrice, FinancialMetric, FinancialStatement
+from db.sync_status import record_sync
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +132,7 @@ def sync_daily_prices(target_date: date | None = None):
             session.execute(stmt)
 
     logger.info(f"일별 주가 동기화 완료: {len(records)}건")
+    record_sync("daily_prices", records=len(records))
 
 
 def sync_historical_prices(ticker: str, start_date: str, end_date: str):
@@ -247,6 +249,7 @@ def calculate_financial_metrics():
         session.execute(stmt)
 
     logger.info(f"재무지표 계산 완료: {len(records)}개사")
+    record_sync("financial_metrics", records=len(records))
 
 
 def _get_statement_data(company_id: int, fiscal_year: int, report_code: str) -> dict:

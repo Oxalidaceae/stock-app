@@ -16,6 +16,7 @@ def run_initial_setup():
     from dart.dart_pipeline     import sync_corp_codes, sync_disclosures
     from market.market_pipeline import sync_stock_listing, sync_daily_prices
     from ecos.ecos_pipeline     import sync_all_indicators
+    from ecos.keystat_pipeline  import sync_macro_keystats
 
     logger.info("=== 초기 데이터 적재 시작 ===")
 
@@ -25,13 +26,16 @@ def run_initial_setup():
     # 2. KOSPI/KOSDAQ 종목 목록 (sector, industry, market)
     sync_stock_listing()
 
-    # 3. 한국은행 경제지표 10년치
+    # 3. 한국은행 경제지표 10년치 (시계열)
     sync_all_indicators(years_back=10)
 
-    # 4. 최근 7일 공시
+    # 4. 한국은행 100대 통계지표 (스냅샷)
+    sync_macro_keystats()
+
+    # 5. 최근 7일 공시
     sync_disclosures(days_back=7)
 
-    # 5. 전종목 최신 주가 (직전 영업일)
+    # 6. 전종목 최신 주가 (직전 영업일)
     sync_daily_prices()
 
     logger.info("=== 초기 데이터 적재 완료 ===")
@@ -106,9 +110,18 @@ def main():
 
     if args.daemon:
         from datetime import datetime
+        from ecos.keystat_pipeline import sync_macro_keystats
+
         logger.info(f"스케줄러 데몬 시작 (현재 시각: {datetime.now()})")
         schedule.every().day.at("16:30").do(run_daily)       # 장 마감 후
         schedule.every().sunday.at("02:00").do(run_weekly)   # 주말 새벽
+        schedule.every().hour.do(sync_macro_keystats)        # 100대 통계지표 매시간
+
+        # 데몬 부팅 직후 한 번 실행해서 DB 비어있어도 즉시 채움
+        try:
+            sync_macro_keystats()
+        except Exception as e:
+            logger.warning(f"기동 시 100대 지표 동기화 실패: {e}")
 
         for job in schedule.get_jobs():
             logger.info(f"  등록: 다음 실행 {job.next_run}  →  {job.job_func.__name__}")
