@@ -1,7 +1,8 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 DART_API_KEY = os.getenv("DART_API_KEY")
 ECOS_API_KEY = os.getenv("ECOS_API_KEY")

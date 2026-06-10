@@ -3,7 +3,7 @@ spring:
     name: stock-app
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/stockapp
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:stockapp}
     username: ${DB_USERNAME:stockapp}
     password: ${DB_PASSWORD:stockapp}
     driver-class-name: org.postgresql.Driver
@@ -22,22 +22,52 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  cache:
+    type: none   # RedisConfig에서 NoOpCacheManager 사용 — Jackson 직렬화 이슈로 임시 비활성
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+      repositories:
+        enabled: false   # Spring Data Redis Repository 스캐닝 비활성 (JPA 전용 프로젝트)
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
 
 server:
   port: 8080
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized  # 익명: 단순 UP/DOWN, 내부망: 상세
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+
+logging:
+  level:
+    com.stockapp: DEBUG
+
 app:
   dart:
-    api-key: ${DART_API_KEY}
+    api-key: ${DART_API_KEY:}
     base-url: https://opendart.fss.or.kr/api
   ecos:
-    api-key: ${ECOS_API_KEY}
+    api-key: ${ECOS_API_KEY:}
     base-url: https://ecos.bok.or.kr/api
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:default-dev-secret-change-in-production}
     expiration-ms: 86400000  # 24시간

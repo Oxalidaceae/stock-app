@@ -1,8 +1,8 @@
-FinanceDataReader==0.9.50
-requests==2.32.3
-psycopg2-binary==2.9.9
-redis==5.0.7
-pandas==2.2.2
-python-dotenv==1.0.1
-schedule==1.2.2
-SQLAlchemy==2.0.31
+git+https://github.com/FinanceData/FinanceDataReader.git
+requests>=2.32
+psycopg2-binary>=2.9
+redis>=5.0
+pandas>=2.2
+python-dotenv>=1.0
+schedule>=1.2
+SQLAlchemy>=2.0

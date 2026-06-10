@@ -1,0 +1,117 @@
+services:
+  # ── PostgreSQL ─────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: stockapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-stockapp}
+      POSTGRES_USER: ${DB_USERNAME:-stockapp}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-stockapp}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-stockapp}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Redis ──────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: stockapp-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Spring Boot Backend ────────────────────────
+  backend:
+    build: ./backend
+    container_name: stockapp-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-stockapp}
+      DB_USERNAME: ${DB_USERNAME:-stockapp}
+      DB_PASSWORD: ${DB_PASSWORD:-stockapp}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      DART_API_KEY: ${DART_API_KEY}
+      ECOS_API_KEY: ${ECOS_API_KEY}
+      JWT_SECRET: ${JWT_SECRET:-default-dev-secret-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── React Frontend (nginx) ────────────────────
+  frontend:
+    build: ./frontend
+    container_name: stockapp-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # ── Python Collector (일회성 초기화 — 수동 실행) ──────────
+  collector-init:
+    build: ./collector
+    container_name: stockapp-collector-init
+    command: ["--init"]
+    environment:
+      TZ: Asia/Seoul
+      DART_API_KEY: ${DART_API_KEY}
+      ECOS_API_KEY: ${ECOS_API_KEY}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-stockapp}
+      DB_USERNAME: ${DB_USERNAME:-stockapp}
+      DB_PASSWORD: ${DB_PASSWORD:-stockapp}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles:
+      - init
+
+  # ── Python Collector (스케줄 데몬 — 매일 16:30, 일요일 02:00) ────
+  collector-daemon:
+    build: ./collector
+    container_name: stockapp-collector-daemon
+    command: ["--daemon"]
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+      DART_API_KEY: ${DART_API_KEY}
+      ECOS_API_KEY: ${ECOS_API_KEY}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-stockapp}
+      DB_USERNAME: ${DB_USERNAME:-stockapp}
+      DB_PASSWORD: ${DB_PASSWORD:-stockapp}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

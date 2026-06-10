@@ -11,10 +11,9 @@ frontend/dist/
 frontend/.env
 
 # Python
-collector/__pycache__/
-collector/*.pyc
+**/__pycache__/
+*.pyc
 collector/venv/
-collector/.env
 
 # IDE
 .idea/

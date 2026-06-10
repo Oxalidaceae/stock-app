@@ -1,0 +1,229 @@
+# Stock App
+
+대한민국 상장 기업의 투자 정보를 종합적으로 제공하는 블룸버그 터미널 스타일 웹 서비스.
+
+DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한 곳에서 조회하고, 재무지표 기반 종목 스크리너를 제공한다.
+
+---
+
+## 주요 기능
+
+- **종목 검색** — 키보드 화살표 네비게이션 + Enter로 빠른 진입
+- **종목 상세** — 가격, 재무지표(PER·PBR·ROE 등), 최근 공시
+- **외부 차트 링크** — TradingView·네이버 금융으로 깊은 차트 조회 (자체 차트 미운영)
+- **DART 공시** — 검색·날짜별 그룹·5영업일 보관, 5영업일 이전은 DART 직링크
+- **재무제표** — 분기·연간 데이터에서 PER/PBR/PSR/ROE/ROA 등 자동 계산
+- **경제지표** — 한국은행 기준금리·실질 GDP·CPI·원달러 환율·M2·경상수지 (10년치)
+- **종목 스크리너** — 재무지표·시장·시총 조건 기반 필터링
+
+---
+
+## 기술 스택
+
+| 레이어 | 기술 |
+|---|---|
+| 백엔드 | Spring Boot 3.3, Java 21, Maven, Flyway |
+| 프론트엔드 | React 18, TypeScript, Vite, TanStack Query |
+| 데이터 수집 | Python 3.11, FinanceDataReader, SQLAlchemy, schedule |
+| 데이터베이스 | PostgreSQL 16 |
+| 캐시 | Redis 7 (현재 NoOpCacheManager로 비활성) |
+| 인프라 | Docker Compose |
+
+---
+
+## 프로젝트 구조
+
+```
+stock_app/
+├── backend/             # Spring Boot REST API
+│   └── src/main/resources/db/migration/   # Flyway SQL
+├── frontend/            # React SPA (nginx 서빙)
+├── collector/           # Python 데이터 수집 파이프라인
+│   ├── dart/            # DART OpenAPI 클라이언트
+│   ├── ecos/            # 한국은행 ECOS 클라이언트
+│   ├── market/          # 주가·재무지표 (FinanceDataReader)
+│   └── scripts/         # 진단 스크립트 (probe_*.py)
+└── docker-compose.yml
+```
+
+### 데이터 흐름
+
+```
+[DART API]  [ECOS API]  [FinanceDataReader (KRX)]
+      ↓           ↓              ↓
+   [ Python Collector — daemon: 매일 16:30 / 일 02:00 ]
+              ↓
+         [ PostgreSQL ]
+              ↓
+      [ Spring Boot REST API ]
+              ↓
+         [ React 프론트 ]
+```
+
+---
+
+## 빠른 시작 (Docker)
+
+### 1. 사전 준비
+
+- Docker Desktop 또는 Docker Engine + Compose v2
+- DART OpenAPI 키 ([opendart.fss.or.kr](https://opendart.fss.or.kr) 가입 후 발급)
+- ECOS OpenAPI 키 ([ecos.bok.or.kr](https://ecos.bok.or.kr) 가입 후 발급)
+
+### 2. `.env` 작성
+
+프로젝트 루트에 `.env` 파일:
+
+```env
+DART_API_KEY=발급받은_DART_키
+ECOS_API_KEY=발급받은_ECOS_키
+DB_NAME=stockapp
+DB_USERNAME=stockapp
+DB_PASSWORD=stockapp
+JWT_SECRET=어떤_긴_랜덤_문자열
+```
+
+### 3. 인프라 + 백엔드 + 프론트 + 자동 데몬 기동
+
+```bash
+docker-compose up -d
+```
+
+→ 5개 컨테이너 기동:
+- `postgres`, `redis`, `backend`, `frontend`, **`collector-daemon`** (매일/주간 자동 갱신)
+
+### 4. 초기 데이터 적재 (최초 1회)
+
+```bash
+# 기본 데이터: 기업코드, KOSPI/KOSDAQ, 경제지표 10년, 최근 공시, 직전 영업일 주가 (~30초)
+docker-compose --profile init up collector-init
+
+# 재무제표 + PER/PBR/ROE 등 메트릭 (~30분, DART 5,000+ 콜)
+docker-compose --profile init run --rm collector-init --weekly
+```
+
+### 5. 접속
+
+- 프론트엔드: <http://localhost:3000>
+- 백엔드 API: <http://localhost:8080/api>
+
+---
+
+## Collector CLI 옵션
+
+```bash
+# 데몬 컨테이너 안에서 ad-hoc 실행:
+docker-compose run --rm collector-daemon <옵션>
+```
+
+| 옵션 | 설명 |
+|---|---|
+| `--init` | 기업코드 + 시장정보 + 경제지표(10년) + 최근 공시 + 직전 영업일 주가 |
+| `--daily` | 일별 주가 + 공시 + 경제지표 갱신 |
+| `--weekly` | 분기/연간 재무제표 배치 + 재무지표 계산 (~30분) |
+| `--ecos` | 경제지표만 갱신 |
+| `--backfill --ticker 005930 --start 2020-01-01` | 특정 종목 과거 주가 백필 |
+| `--daemon` | 스케줄러 (매일 16:30 KST `--daily` / 일요일 02:00 `--weekly`) |
+
+### 진단 스크립트 (`collector/scripts/`)
+
+```bash
+# ECOS 통계 코드 찾기 (깨진 지표 복구용)
+docker-compose run --rm --entrypoint python collector-daemon scripts/probe_ecos.py
+
+# DART 재무제표 호출 진단 (대형주 5개 × 6보고서)
+docker-compose run --rm --entrypoint python collector-daemon scripts/probe_dart_financials.py
+
+# 단일 회사 sync 추적
+docker-compose run --rm --entrypoint python collector-daemon scripts/probe_single_financial.py
+```
+
+---
+
+## 외부 API
+
+| API | 발급처 | 일일 한도 |
+|---|---|---|
+| DART OpenAPI | <https://opendart.fss.or.kr> | 10,000 콜 |
+| 한국은행 ECOS | <https://ecos.bok.or.kr> | 10,000 콜 |
+| FinanceDataReader | KRX 스크래핑 (무인증) | 명시적 제한 없음 (예의 호출) |
+
+---
+
+## 데이터베이스
+
+Flyway로 버전 관리. 마이그레이션 파일: `backend/src/main/resources/db/migration/`
+
+| 테이블 | 설명 |
+|---|---|
+| `companies` | 기업 기본정보 (DART corp_code ↔ 종목코드 매핑) |
+| `stock_prices` | 일별 주가 OHLCV + 시총 |
+| `disclosures` | DART 공시 (최근 5영업일만 보관) |
+| `financial_statements` | DART 재무제표 계정별 원본 |
+| `financial_metrics` | PER·PBR·ROE 등 계산 지표 (스크리너용) |
+| `economic_indicators` | 한국은행 ECOS 시계열 |
+
+---
+
+## 트러블슈팅
+
+### Flyway 체크섬 미스매치
+
+이미 적용된 V1 마이그레이션 파일을 수정한 경우 발생.
+
+```bash
+docker-compose down -v   # 볼륨까지 제거 (dev 한정)
+docker-compose up -d
+```
+
+또는 Flyway `repair` 명령. 운영에서는 V2, V3... 형태로 새 마이그레이션을 추가할 것.
+
+### Docker 네트워크 충돌 ("network ... not found")
+
+옛 컨테이너가 사라진 네트워크 ID를 참조하는 상태.
+
+```bash
+docker rm -f stockapp-collector-init
+docker network prune -f
+docker-compose up -d
+```
+
+### 컬렉터 코드 변경이 반영되지 않음
+
+빌드 캐시 때문. 항상 빌드 명시:
+
+```bash
+docker-compose build collector-daemon
+docker-compose up -d collector-daemon
+```
+
+또는 `--no-cache`로 완전 재빌드.
+
+### 데몬 스케줄이 한국시간 아닌 UTC로 동작
+
+`docker-compose.yml`의 collector 서비스에 `TZ: Asia/Seoul` 환경 변수가 설정되어 있어야 함.
+
+확인:
+```bash
+docker exec stockapp-collector-daemon date
+```
+
+---
+
+## 알려진 제한
+
+- **차트**: 자체 차트 미운영 (TradingView 무료 위젯이 KRX 종목 미지원 + 자체 캔들 차트는 외부 차트 도구 대비 빈약). 종목 상세 페이지에서 TradingView·네이버 금융 직링크 제공.
+- **Redis 캐시**: Spring Boot 3.x + GenericJackson2JsonRedisSerializer 폴리모픽 타입 충돌로 임시 비활성. `NoOpCacheManager` 사용.
+- **--init이 재무제표는 수집 안 함**: DART API 한도 + 시간(30분) 부담 때문. `--weekly`로 별도 실행 필요.
+- **재무제표 첫 적재 시점**: 새해 분기보고서는 회사별 제출 시기가 달라 적재 누락 가능. 사업보고서(11011)는 3월말 제출 후 안정적.
+
+---
+
+## 배포 (예정)
+
+| 컴포넌트 | 후보 |
+|---|---|
+| React 프론트엔드 | Cloudflare Pages / Vercel |
+| Spring Boot 백엔드 | Railway / Fly.io |
+| Python Collector | Railway scheduled job / GitHub Actions cron |
+| PostgreSQL | Supabase / Neon |
