@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getStatements, getMetrics } from '../api/endpoints'
+import { getStatements, getMetrics, getFinancialTrend } from '../api/endpoints'
 
 export const useStatements = (ticker: string, year?: number, reportCode?: string, fsDiv?: string) =>
   useQuery({
@@ -13,6 +13,14 @@ export const useMetrics = (ticker: string) =>
   useQuery({
     queryKey: ['financials', ticker, 'metrics'],
     queryFn: () => getMetrics(ticker),
+    enabled: !!ticker,
+    staleTime: 30 * 60 * 1000,
+  })
+
+export const useFinancialTrend = (ticker: string, reportCode?: string, fsDiv?: string) =>
+  useQuery({
+    queryKey: ['financials', ticker, 'trend', reportCode, fsDiv],
+    queryFn: () => getFinancialTrend(ticker, reportCode, fsDiv),
     enabled: !!ticker,
     staleTime: 30 * 60 * 1000,
   })

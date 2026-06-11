@@ -79,6 +79,19 @@ export interface FinancialStatement {
   currency: string
 }
 
+export interface FinancialTrendPoint {
+  fiscalYear: number
+  revenue: number | null
+  operatingIncome: number | null
+  netIncome: number | null
+  totalAssets: number | null
+  totalEquity: number | null
+  eps: number | null
+  operatingMargin: number | null
+  netMargin: number | null
+  roe: number | null
+}
+
 export interface FinancialMetric {
   baseDate: string
   fiscalYear: number

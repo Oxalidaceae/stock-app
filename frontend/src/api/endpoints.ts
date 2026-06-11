@@ -8,6 +8,7 @@ import type {
   Disclosure,
   FinancialStatement,
   FinancialMetric,
+  FinancialTrendPoint,
   EconomicIndicatorSummary,
   EconomicIndicator,
   MacroKeystat,
@@ -68,6 +69,13 @@ export const getStatements = (
 export const getMetrics = (ticker: string) =>
   client
     .get<ApiResponse<FinancialMetric>>(`/financials/${ticker}/metrics`)
+    .then((r) => r.data.data)
+
+export const getFinancialTrend = (ticker: string, reportCode?: string, fsDiv?: string) =>
+  client
+    .get<ApiResponse<FinancialTrendPoint[]>>(`/financials/${ticker}/trend`, {
+      params: { reportCode, fsdiv: fsDiv },
+    })
     .then((r) => r.data.data)
 
 /* ── Economic ─────────────────────────────── */
