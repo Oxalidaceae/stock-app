@@ -137,6 +137,10 @@ export interface MacroKeystat {
   unit: string | null
   cycle: string | null
   updatedAt: string | null
+  previousValue: string | null
+  previousCycle: string | null
+  change: number | null
+  changePercent: number | null
 }
 
 /* ── Economic ────────────────────────────────────────── */

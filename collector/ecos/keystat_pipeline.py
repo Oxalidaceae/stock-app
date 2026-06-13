@@ -8,13 +8,14 @@ import logging
 from datetime import datetime
 
 import requests
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db.database import get_session
-from db.models import MacroKeystat
+from db.models import MacroKeystat, MacroKeystatHistory
 from db.sync_status import record_sync
 from config import ECOS_API_KEY, ECOS_BASE_URL
 
@@ -78,3 +79,38 @@ def sync_macro_keystats():
 
     logger.info(f"100대 통계지표 동기화 완료: {len(records)}건")
     record_sync("macro_keystats", records=len(records))
+
+    _record_history(records, now)
+
+
+def _record_history(records: list[dict], now: datetime):
+    """cycle(데이터 시점)이 바뀐 지표만 macro_keystat_history 에 새 행 추가."""
+    with get_session() as session:
+        rows = session.execute(text("""
+            SELECT DISTINCT ON (class_name, keystat_name) class_name, keystat_name, cycle
+            FROM macro_keystat_history
+            ORDER BY class_name, keystat_name, recorded_at DESC
+        """)).fetchall()
+    latest_cycle = {(r[0], r[1]): r[2] for r in rows}
+
+    history_records = []
+    for r in records:
+        key = (r["class_name"], r["keystat_name"])
+        if r["cycle"] and latest_cycle.get(key) != r["cycle"]:
+            history_records.append({
+                "class_name":   r["class_name"],
+                "keystat_name": r["keystat_name"],
+                "value":        r["value"],
+                "unit":         r["unit"],
+                "cycle":        r["cycle"],
+                "recorded_at":  now,
+            })
+
+    if not history_records:
+        logger.info("100대 통계지표 히스토리: 신규 시점 없음")
+        return
+
+    with get_session() as session:
+        session.execute(pg_insert(MacroKeystatHistory).values(history_records))
+
+    logger.info(f"100대 통계지표 히스토리 적재: {len(history_records)}건 (신규 시점)")
