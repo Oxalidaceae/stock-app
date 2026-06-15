@@ -113,5 +113,19 @@ services:
       redis:
         condition: service_healthy
 
+  # ── Dozzle (컨테이너 로그 뷰어) ──────────────────
+  # 접속: SSH 터널 후 http://localhost:8081
+  #   ssh -L 8081:localhost:8081 <user>@<host>
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: stockapp-dozzle
+    restart: unless-stopped
+    environment:
+      DOZZLE_NO_ANALYTICS: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:8081:8080"
+
 volumes:
   pgdata:
