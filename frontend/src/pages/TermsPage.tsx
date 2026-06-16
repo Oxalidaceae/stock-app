@@ -10,8 +10,8 @@
 import type { ReactNode } from 'react'
 
 const SITE_NAME = 'Jipyo (지표)'
-const OPERATOR = '[운영자 성명/닉네임 입력]'
-const CONTACT_EMAIL = 'bongcheol.seo@outlook.com'
+const OPERATOR = 'Jipyo 운영자'
+const CONTACT_EMAIL = 'jipyopage@gmail.com'
 const EFFECTIVE_DATE = '2026년 6월 15일'
 
 function Section({ no, title, children }: { no: number; title: string; children: ReactNode }) {
