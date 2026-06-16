@@ -133,3 +133,16 @@ class MacroKeystat(Base):
     updated_at   = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class MacroKeystatHistory(Base):
+    """100대 통계지표 시계열. cycle 이 바뀔 때만 새 행 추가."""
+    __tablename__ = "macro_keystat_history"
+
+    id           = Column(BigInteger, primary_key=True, autoincrement=True)
+    class_name   = Column(String(50),  nullable=False)
+    keystat_name = Column(String(100), nullable=False)
+    value        = Column(String(50))
+    unit         = Column(String(20))
+    cycle        = Column(String(20))
+    recorded_at  = Column(DateTime, server_default=func.now())
+
+

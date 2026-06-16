@@ -30,6 +30,28 @@ function formatCycle(cycle: string | null): string {
   return cycle
 }
 
+function ChangeBadge({ item }: { item: MacroKeystat }) {
+  if (item.change == null) return null
+
+  const color =
+    item.change > 0 ? '#00c853'
+    : item.change < 0 ? '#ff1744'
+    : '#8b8fa3'
+  const arrow = item.change > 0 ? '▲' : item.change < 0 ? '▼' : '–'
+  const sign = item.change > 0 ? '+' : ''
+
+  return (
+    <span style={{ color, fontSize: '0.75rem', fontVariantNumeric: 'tabular-nums' }}>
+      {arrow} {sign}{item.change.toLocaleString()}
+      {item.changePercent != null && (
+        <span style={{ marginLeft: 4, opacity: 0.85 }}>
+          ({sign}{item.changePercent.toFixed(2)}%)
+        </span>
+      )}
+    </span>
+  )
+}
+
 function MacroCard({ item, highlight }: { item: MacroKeystat; highlight?: boolean }) {
   return (
     <div
@@ -49,8 +71,11 @@ function MacroCard({ item, highlight }: { item: MacroKeystat; highlight?: boolea
         {item.value ?? '—'}
         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 6, fontWeight: 400 }}>{item.unit}</span>
       </div>
-      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 6 }}>
-        {formatCycle(item.cycle)}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, minHeight: '1em' }}>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+          {formatCycle(item.cycle)}
+        </span>
+        <ChangeBadge item={item} />
       </div>
     </div>
   )

@@ -59,7 +59,7 @@ management:
 
 logging:
   level:
-    com.stockapp: DEBUG
+    com.stockapp: ${LOG_LEVEL:INFO}   # 로컬 디버깅 시 LOG_LEVEL=DEBUG 로 오버라이드
 
 app:
   dart:

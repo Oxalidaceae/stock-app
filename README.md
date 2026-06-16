@@ -219,11 +219,12 @@ docker exec stockapp-collector-daemon date
 
 ---
 
-## 배포 (예정)
+## 배포
 
-| 컴포넌트 | 후보 |
-|---|---|
-| React 프론트엔드 | Cloudflare Pages / Vercel |
-| Spring Boot 백엔드 | Railway / Fly.io |
-| Python Collector | Railway scheduled job / GitHub Actions cron |
-| PostgreSQL | Supabase / Neon |
+단일 VM에 `docker compose`로 전체 스택을 올리고 앞단에 HTTPS 리버스 프록시를 두는 방식.
+상세 절차(환경 변수·HTTPS·방화벽·백업·체크리스트)는 **[docs/DEPLOY.md](docs/DEPLOY.md)** 참고.
+
+```bash
+docker compose up -d --build          # 전체 기동
+docker compose --profile init up collector-init   # 초기 데이터 적재
+```
