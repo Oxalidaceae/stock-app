@@ -18,7 +18,7 @@ export function Sidebar() {
     <aside className="app-sidebar">
       <div className="sidebar-logo">
         <span className="dot" />
-        STOCK APP
+        JIPYO
       </div>
       <nav className="sidebar-nav">
         {links.map((link) => (

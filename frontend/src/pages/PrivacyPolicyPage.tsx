@@ -10,7 +10,7 @@
 
 import type { ReactNode } from 'react'
 
-const SITE_NAME = 'STOCK APP'
+const SITE_NAME = 'Jipyo (지표)'
 const SITE_DOMAIN = '[배포 도메인 입력]' // 예: https://stockapp.example.com
 const OPERATOR = '[운영자 성명/닉네임 입력]'
 const CONTACT_EMAIL = 'bongcheol.seo@outlook.com'

@@ -9,7 +9,7 @@
 
 import type { ReactNode } from 'react'
 
-const SITE_NAME = 'STOCK APP'
+const SITE_NAME = 'Jipyo (지표)'
 const OPERATOR = '[운영자 성명/닉네임 입력]'
 const CONTACT_EMAIL = 'bongcheol.seo@outlook.com'
 const EFFECTIVE_DATE = '2026년 6월 15일'

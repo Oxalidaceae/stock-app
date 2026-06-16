@@ -1,4 +1,4 @@
-# Stock App — Claude Agent Guide
+# Jipyo (지표) — Claude Agent Guide
 
 ## 프로젝트 개요
 
