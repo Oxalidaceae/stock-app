@@ -14,7 +14,7 @@ const SITE_NAME = 'Jipyo (지표)'
 const SITE_DOMAIN = '[배포 도메인 입력]' // 예: https://stockapp.example.com
 const OPERATOR = 'Jipyo 운영자'
 const CONTACT_EMAIL = 'jipyopage@gmail.com'
-const EFFECTIVE_DATE = '2026년 6월 15일'
+const EFFECTIVE_DATE = '2026년 6월 17일'
 
 function Section({ no, title, children }: { no: number; title: string; children: ReactNode }) {
   return (
