@@ -2,12 +2,13 @@ import { NavLink } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 
 const links = [
-  { to: '/',            icon: '◉', label: 'Dashboard' },
-  { to: '/screener',    icon: '⊞', label: 'Screener' },
-  { to: '/compare',     icon: '⇄', label: 'Compare' },
-  { to: '/disclosures', icon: '◫', label: 'Disclosures' },
-  { to: '/economic',    icon: '◈', label: 'Economic' },
-  { to: '/macro',       icon: '◇', label: 'Macro' },
+  { to: '/',            icon: '◉', label: '대시보드' },
+  { to: '/screener',    icon: '⊞', label: '스크리너' },
+  { to: '/compare',     icon: '⇄', label: '종목 비교' },
+  { to: '/disclosures', icon: '◫', label: '공시' },
+  { to: '/economic',    icon: '◈', label: '경제지표' },
+  { to: '/macro',       icon: '◇', label: '거시지표' },
+  { to: '/news',        icon: '◰', label: '경제 소식' },
 ]
 
 export function Sidebar() {
@@ -72,6 +73,7 @@ export function Sidebar() {
         <div>경제지표: 한국은행 ECOS</div>
         <div>공시/재무: 금융감독원 DART</div>
         <div>주가: FinanceDataReader</div>
+        <div>경제 소식: 정책브리핑(공공누리)</div>
       </div>
     </aside>
   )

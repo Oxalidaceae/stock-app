@@ -12,6 +12,7 @@ import type {
   EconomicIndicatorSummary,
   EconomicIndicator,
   MacroKeystat,
+  PolicyBriefing,
   SyncStatus,
   ScreenerRequest,
   ScreenerResult,
@@ -97,6 +98,15 @@ export const getIndicatorData = (statCode: string, start?: string, end?: string)
 export const getMacroKeystats = () =>
   client
     .get<ApiResponse<MacroKeystat[]>>('/macro/keystats')
+    .then((r) => r.data.data)
+
+/* ── Policy Briefing (경제 소식) ──────────── */
+
+export const getBriefings = (ministry?: string, page = 0, size = 30) =>
+  client
+    .get<ApiResponse<PageResponse<PolicyBriefing>>>('/briefings', {
+      params: { ministry: ministry || undefined, page, size },
+    })
     .then((r) => r.data.data)
 
 /* ── Sync Status ──────────────────────────── */
