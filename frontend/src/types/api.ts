@@ -143,6 +143,18 @@ export interface MacroKeystat {
   changePercent: number | null
 }
 
+/* ── Policy Briefing (경제 소식) ───────────────────────── */
+
+export interface PolicyBriefing {
+  id: number
+  title: string
+  summary: string | null
+  ministry: string | null
+  source: string | null
+  link: string
+  publishedAt: string | null
+}
+
 /* ── Economic ────────────────────────────────────────── */
 
 export interface EconomicIndicatorSummary {

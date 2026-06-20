@@ -1,6 +1,6 @@
 from sqlalchemy import (
     BigInteger, SmallInteger, String, Boolean, Date, DateTime,
-    Numeric, ForeignKey, Column, CHAR
+    Numeric, ForeignKey, Column, CHAR, Text
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
@@ -144,5 +144,19 @@ class MacroKeystatHistory(Base):
     unit         = Column(String(20))
     cycle        = Column(String(20))
     recorded_at  = Column(DateTime, server_default=func.now())
+
+
+class PolicyBriefing(Base):
+    """정책브리핑(korea.kr) 부처별 RSS — "경제 소식". link 기준 중복 제거."""
+    __tablename__ = "policy_briefing"
+
+    id           = Column(BigInteger, primary_key=True, autoincrement=True)
+    title        = Column(String(500), nullable=False)
+    summary      = Column(Text)
+    ministry     = Column(String(100))
+    source       = Column(String(50))
+    link         = Column(String(1000), nullable=False, unique=True)
+    published_at = Column(DateTime)
+    collected_at = Column(DateTime, server_default=func.now())
 
 

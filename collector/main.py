@@ -17,6 +17,7 @@ def run_initial_setup():
     from market.market_pipeline import sync_stock_listing, sync_daily_prices
     from ecos.ecos_pipeline     import sync_all_indicators
     from ecos.keystat_pipeline  import sync_macro_keystats
+    from rss.briefing_pipeline  import sync_policy_briefings
 
     logger.info("=== 초기 데이터 적재 시작 ===")
 
@@ -37,6 +38,9 @@ def run_initial_setup():
 
     # 6. 전종목 최신 주가 (직전 영업일)
     sync_daily_prices()
+
+    # 7. 정책브리핑 경제 소식 (RSS — 기재부·금융위·관세청)
+    sync_policy_briefings()
 
     logger.info("=== 초기 데이터 적재 완료 ===")
     logger.info("재무제표: 'python main.py --weekly' 로 별도 실행")
@@ -76,6 +80,7 @@ def main():
     parser.add_argument("--daily",     action="store_true", help="일별 갱신 즉시 실행")
     parser.add_argument("--weekly",    action="store_true", help="주간 재무제표 즉시 실행")
     parser.add_argument("--ecos",      action="store_true", help="경제지표만 즉시 실행")
+    parser.add_argument("--rss",       action="store_true", help="경제 소식(정책브리핑 RSS) 즉시 실행")
     parser.add_argument("--backfill",  action="store_true", help="특정 종목 과거 주가 백필")
     parser.add_argument("--ticker",    type=str, help="백필 대상 종목코드 (예: 005930)")
     parser.add_argument("--start",     type=str, default="2020-01-01", help="백필 시작일 (YYYY-MM-DD)")
@@ -100,6 +105,11 @@ def main():
         sync_all_indicators()
         return
 
+    if args.rss:
+        from rss.briefing_pipeline import sync_policy_briefings
+        sync_policy_briefings()
+        return
+
     if args.backfill:
         if not args.ticker:
             logger.error("--ticker 옵션 필요")
@@ -111,17 +121,23 @@ def main():
     if args.daemon:
         from datetime import datetime
         from ecos.keystat_pipeline import sync_macro_keystats
+        from rss.briefing_pipeline import sync_policy_briefings
 
         logger.info(f"스케줄러 데몬 시작 (현재 시각: {datetime.now()})")
-        schedule.every().day.at("16:30").do(run_daily)       # 장 마감 후
-        schedule.every().sunday.at("02:00").do(run_weekly)   # 주말 새벽
-        schedule.every().hour.do(sync_macro_keystats)        # 100대 통계지표 매시간
+        schedule.every().day.at("16:30").do(run_daily)            # 장 마감 후
+        schedule.every().sunday.at("02:00").do(run_weekly)        # 주말 새벽
+        schedule.every().hour.do(sync_macro_keystats)             # 100대 통계지표 매시간
+        schedule.every(3).hours.do(sync_policy_briefings)         # 경제 소식 RSS 3시간마다
 
         # 데몬 부팅 직후 한 번 실행해서 DB 비어있어도 즉시 채움
         try:
             sync_macro_keystats()
         except Exception as e:
             logger.warning(f"기동 시 100대 지표 동기화 실패: {e}")
+        try:
+            sync_policy_briefings()
+        except Exception as e:
+            logger.warning(f"기동 시 경제 소식 동기화 실패: {e}")
 
         for job in schedule.get_jobs():
             logger.info(f"  등록: 다음 실행 {job.next_run}  →  {job.job_func.__name__}")

@@ -8,6 +8,7 @@ import EconomicPage from './pages/EconomicPage'
 import ScreenerPage from './pages/ScreenerPage'
 import ComparePage from './pages/ComparePage'
 import MacroPage from './pages/MacroPage'
+import NewsPage from './pages/NewsPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
 import { useThemeStore } from './stores/themeStore'
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/disclosures" element={<DisclosuresPage />} />
         <Route path="/economic" element={<EconomicPage />} />
         <Route path="/macro" element={<MacroPage />} />
+        <Route path="/news" element={<NewsPage />} />
         <Route path="/screener" element={<ScreenerPage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
