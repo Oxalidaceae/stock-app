@@ -11,7 +11,7 @@
 import type { ReactNode } from 'react'
 
 const SITE_NAME = 'Jipyo (지표)'
-const SITE_DOMAIN = 'Jipyo(지표) 서비스' // 도메인 확정 시 실제 주소로 교체 (예: https://jipyo.kr)
+const SITE_DOMAIN = 'https://jipyo.net'
 const OPERATOR = 'Jipyo 운영자'
 const CONTACT_EMAIL = 'jipyopage@gmail.com'
 const EFFECTIVE_DATE = '2026년 6월 21일'
