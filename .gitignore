@@ -1,9 +1,10 @@
 # Backend
 backend/target/
-backend/.mvn/
 *.class
 *.jar
 *.war
+# Maven wrapper 설정은 추적 (Docker 빌드에 필요) — only-script 방식이라 jar 없음
+!backend/.mvn/wrapper/maven-wrapper.properties
 
 # Frontend
 frontend/node_modules/
