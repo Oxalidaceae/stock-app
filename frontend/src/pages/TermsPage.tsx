@@ -12,7 +12,7 @@ import type { ReactNode } from 'react'
 const SITE_NAME = 'Jipyo (지표)'
 const OPERATOR = 'Jipyo 운영자'
 const CONTACT_EMAIL = 'jipyopage@gmail.com'
-const EFFECTIVE_DATE = '2026년 6월 17일'
+const EFFECTIVE_DATE = '2026년 6월 21일'
 
 function Section({ no, title, children }: { no: number; title: string; children: ReactNode }) {
   return (
