@@ -1,4 +1,5 @@
-import { Outlet, Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { SearchBar } from './SearchBar'
 
@@ -30,6 +31,13 @@ function Footer() {
 }
 
 export function Layout() {
+  const { pathname } = useLocation()
+
+  // 라우트 이동 시 스크롤을 맨 위로 (푸터 링크 클릭 후에도 새 페이지를 위에서 시작)
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
   return (
     <div className="app-layout">
       <Sidebar />
