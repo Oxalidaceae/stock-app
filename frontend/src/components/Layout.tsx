@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { SearchBar } from './SearchBar'
+import { AdUnit } from './AdUnit'
 
 function Footer() {
   return (
@@ -45,10 +46,16 @@ export function Layout() {
         <header className="app-topbar">
           <SearchBar />
         </header>
-        <main className="app-content">
-          <Outlet />
-          <Footer />
-        </main>
+        <div className="app-body">
+          <main className="app-content">
+            <Outlet />
+            <Footer />
+          </main>
+          <aside className="app-rail" aria-label="광고">
+            {/* AdSense 대시보드에서 만든 세로(반응형) 광고 단위의 슬롯 ID로 교체하세요 */}
+            <AdUnit slot="0000000000" format="vertical" />
+          </aside>
+        </div>
       </div>
     </div>
   )
