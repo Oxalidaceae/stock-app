@@ -27,6 +27,16 @@ function Footer() {
       <div style={{ marginTop: 4 }}>
         데이터 출처: 금융감독원 DART · 한국은행 ECOS · FinanceDataReader · 대한민국 정책브리핑(공공누리)
       </div>
+      <div style={{ marginTop: 8, display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span>© {new Date().getFullYear()} Jipyo (지표). All rights reserved.</span>
+        <span style={{ opacity: 0.4 }}>·</span>
+        <span>
+          문의:{' '}
+          <a href="mailto:jipyopage@gmail.com" style={{ color: 'var(--text-secondary)' }}>
+            jipyopage@gmail.com
+          </a>
+        </span>
+      </div>
     </footer>
   )
 }
