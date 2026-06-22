@@ -60,6 +60,13 @@ management:
 logging:
   level:
     com.stockapp: ${LOG_LEVEL:INFO}   # 로컬 디버깅 시 LOG_LEVEL=DEBUG 로 오버라이드
+  file:
+    name: ${LOG_DIR:/logs}/backend.log   # 콘솔(Dozzle) + 파일 동시 출력. docker는 호스트 ./logs 마운트로 재빌드해도 보존
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB        # 하루치가 10MB 넘으면 분할
+      max-history: 30            # 30일(1달)치 보관 후 자동 삭제
+      total-size-cap: 1GB        # 전체 로그 1GB 안전 상한
 
 app:
   dart:

@@ -21,6 +21,9 @@ collector/venv/
 .vscode/
 *.iml
 
+# Logs (호스트 마운트 영속 로그)
+logs/
+
 # OS
 .DS_Store
 

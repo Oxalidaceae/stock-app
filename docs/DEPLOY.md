@@ -275,6 +275,22 @@ docker compose logs -f collector-daemon   # 수집 데몬 로그
 docker compose ps                         # 컨테이너 상태
 ```
 
+### 영속 로그 파일 (재빌드해도 보존)
+
+`docker compose logs` / Dozzle은 컨테이너 수명에 묶여 있어 `up -d --build`로 컨테이너를 재생성하면 사라진다.
+이를 막기 위해 backend·collector는 stdout과 **별도로 호스트의 `./logs` 디렉토리에 회전 로그 파일**을 남긴다.
+
+| 파일 | 출처 | 회전 정책 |
+|---|---|---|
+| `logs/backend.log` | Spring Boot (logback) | 일별 회전 / **30일(1달)** 보관 / 총 1GB 상한 |
+| `logs/collector.log` | Python Collector | 매일 자정 회전 / **30일(1달)** 보관 |
+
+```powershell
+Get-Content logs\backend.log -Tail 100 -Wait   # 실시간 추적 (tail -f 대응)
+```
+
+> `./logs`는 `docker-compose.yml`에서 `./logs:/logs`로 바인드마운트된다. 재빌드·`docker compose down` 후에도 보존되며 `.gitignore` 대상이다.
+
 데이터 갱신 상태는 앱 대시보드의 Sync Status 카드(`/` 페이지) 또는 `GET /api/status/sync`로도 확인 가능.
 
 ---
