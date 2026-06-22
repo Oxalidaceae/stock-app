@@ -62,12 +62,7 @@ export function SyncStatusCard() {
           서버 데이터 마지막 갱신 시점
         </span>
       </div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: 'var(--space-md)',
-        marginTop: 'var(--space-sm)',
-      }}>
+      <div className="grid-3" style={{ marginTop: 'var(--space-sm)' }}>
         {sorted.map((s) => (
           <div
             key={s.jobName}
