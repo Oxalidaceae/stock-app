@@ -14,6 +14,8 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 - **DART 공시** — 검색·날짜별 그룹·5영업일 보관, 5영업일 이전은 DART 직링크
 - **재무제표** — 분기·연간 데이터에서 PER/PBR/PSR/ROE/ROA 등 자동 계산
 - **경제지표** — 한국은행 기준금리·실질 GDP·CPI·원달러 환율·M2·경상수지 (10년치)
+- **거시 100대 통계지표** — 한국은행 주요 통계 100선 (매시간 갱신)
+- **경제 소식** — 정책브리핑 RSS 기반 경제 뉴스 (3시간마다 갱신)
 - **종목 스크리너** — 재무지표·시장·시총 조건 기반 필터링
 
 ---
@@ -23,7 +25,7 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 | 레이어 | 기술 |
 |---|---|
 | 백엔드 | Spring Boot 3.3, Java 21, Maven, Flyway |
-| 프론트엔드 | React 18, TypeScript, Vite, TanStack Query |
+| 프론트엔드 | React 19, TypeScript, Vite, React Router, TanStack Query |
 | 데이터 수집 | Python 3.11, FinanceDataReader, SQLAlchemy, schedule |
 | 데이터베이스 | PostgreSQL 16 |
 | 캐시 | Redis 7 (현재 NoOpCacheManager로 비활성) |
@@ -40,8 +42,10 @@ stock_app/
 ├── frontend/            # React SPA (nginx 서빙)
 ├── collector/           # Python 데이터 수집 파이프라인
 │   ├── dart/            # DART OpenAPI 클라이언트
-│   ├── ecos/            # 한국은행 ECOS 클라이언트
+│   ├── ecos/            # 한국은행 ECOS (경제지표 + 100대 통계지표)
 │   ├── market/          # 주가·재무지표 (FinanceDataReader)
+│   ├── rss/             # 정책브리핑 RSS (경제 소식)
+│   ├── db/              # DB 연결·세션
 │   └── scripts/         # 진단 스크립트 (probe_*.py)
 └── docker-compose.yml
 ```
@@ -49,9 +53,9 @@ stock_app/
 ### 데이터 흐름
 
 ```
-[DART API]  [ECOS API]  [FinanceDataReader (KRX)]
-      ↓           ↓              ↓
-   [ Python Collector — daemon: 매일 16:30 / 일 02:00 ]
+[DART]   [ECOS]   [FinanceDataReader (KRX)]   [정책브리핑 RSS]
+   ↓        ↓              ↓                        ↓
+   [ Python Collector — 매일 16:30 · 일 02:00 · 매시간(100대 지표) · 3시간(RSS) ]
               ↓
          [ PostgreSQL ]
               ↓
@@ -89,8 +93,9 @@ JWT_SECRET=어떤_긴_랜덤_문자열
 docker-compose up -d
 ```
 
-→ 5개 컨테이너 기동:
-- `postgres`, `redis`, `backend`, `frontend`, **`collector-daemon`** (매일/주간 자동 갱신)
+→ 6개 컨테이너 기동:
+- `postgres`, `redis`, `backend`, `frontend`, **`collector-daemon`** (자동 갱신), `dozzle` (로그 뷰어)
+- `collector-init`은 `init` 프로파일이라 기본 기동에 포함되지 않음 (초기 적재 시 수동 실행)
 
 ### 4. 초기 데이터 적재 (최초 1회)
 
@@ -122,8 +127,9 @@ docker-compose run --rm collector-daemon <옵션>
 | `--daily` | 일별 주가 + 공시 + 경제지표 갱신 |
 | `--weekly` | 분기/연간 재무제표 배치 + 재무지표 계산 (~30분) |
 | `--ecos` | 경제지표만 갱신 |
+| `--rss` | 경제 소식(정책브리핑 RSS) 갱신 |
 | `--backfill --ticker 005930 --start 2020-01-01` | 특정 종목 과거 주가 백필 |
-| `--daemon` | 스케줄러 (매일 16:30 KST `--daily` / 일요일 02:00 `--weekly`) |
+| `--daemon` | 스케줄러 (매일 16:30 `--daily` / 일 02:00 `--weekly` / 매시간 100대 지표 / 3시간마다 RSS) |
 
 ### 진단 스크립트 (`collector/scripts/`)
 
@@ -162,6 +168,9 @@ Flyway로 버전 관리. 마이그레이션 파일: `backend/src/main/resources/
 | `financial_statements` | DART 재무제표 계정별 원본 |
 | `financial_metrics` | PER·PBR·ROE 등 계산 지표 (스크리너용) |
 | `economic_indicators` | 한국은행 ECOS 시계열 |
+| `macro_keystats` | 거시 100대 통계지표 (매시간 갱신) |
+| `policy_briefing` | 정책브리핑 RSS (경제 소식) |
+| `sync_status` | 데이터 수집 상태 추적 |
 
 ---
 
@@ -221,8 +230,9 @@ docker exec stockapp-collector-daemon date
 
 ## 배포
 
-단일 VM에 `docker compose`로 전체 스택을 올리고 앞단에 HTTPS 리버스 프록시를 두는 방식.
-상세 절차(환경 변수·HTTPS·방화벽·백업·체크리스트)는 **[docs/DEPLOY.md](docs/DEPLOY.md)** 참고.
+윈도우 노트북(홈서버)에 Docker Desktop으로 전체 스택을 올리고, **Cloudflare Tunnel**로 외부에 공개하는 방식.
+포트포워딩·공인 IP·직접 TLS 발급이 필요 없다.
+상세 절차(환경 변수·Cloudflare Tunnel·무인 운영·백업·체크리스트)는 **[docs/DEPLOY.md](docs/DEPLOY.md)** 참고.
 
 ```bash
 docker compose up -d --build          # 전체 기동

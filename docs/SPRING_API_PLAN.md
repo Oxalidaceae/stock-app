@@ -1,5 +1,11 @@
 # Spring Boot API 레이어 구현 계획
 
+> ⚠️ **이 문서는 초기 구현 계획이며, 실제 구현과 일부 다르다.** (현황: 2026-06)
+> - **Dividend 도메인 / `/api/dividends/calendar` / `dividends` 테이블**: 미구현 (계획만 존재)
+> - **Redis 캐싱**: `@EnableCaching`은 있으나 `RedisConfig`가 `NoOpCacheManager`를 반환해 현재 **비활성**. 표의 캐시 TTL은 향후 목표값.
+> - 계획에 없던 **Macro(거시 100대 지표)·Briefing(정책브리핑)·Status(수집 상태)** 도메인이 이후 추가됨.
+> - 실제 도메인/엔드포인트 기준은 코드(`backend/.../domain/`)와 [CLAUDE.md](CLAUDE.md)를 따른다.
+
 ## 생성할 파일 (43개)
 
 ### 수정
