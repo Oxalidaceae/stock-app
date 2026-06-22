@@ -2,11 +2,28 @@ import schedule
 import time
 import logging
 import argparse
+import os
+from logging.handlers import TimedRotatingFileHandler
 from datetime import date
+
+# stdout(도커/Dozzle 실시간 로그) + 회전 파일(호스트 ./logs 마운트로 재빌드해도 보존)
+_handlers: list[logging.Handler] = [logging.StreamHandler()]
+_log_dir = os.environ.get("LOG_DIR", "/logs")
+try:
+    os.makedirs(_log_dir, exist_ok=True)
+    _handlers.append(TimedRotatingFileHandler(
+        os.path.join(_log_dir, "collector.log"),
+        when="midnight",     # 매일 자정 회전
+        backupCount=30,       # 30일(1달)치 보관 후 자동 삭제
+        encoding="utf-8",
+    ))
+except OSError:
+    pass  # 로그 디렉토리 사용 불가(로컬 개발 등) 시 stdout만 사용
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    handlers=_handlers,
 )
 logger = logging.getLogger(__name__)
 
