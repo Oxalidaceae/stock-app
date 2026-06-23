@@ -7,6 +7,7 @@ const JOB_LABELS: Record<string, string> = {
   ecos_indicators:    '경제지표 시계열',
   macro_keystats:     '100대 통계지표',
   financial_metrics:  '재무지표',
+  policy_briefings:   '경제 소식',
 }
 
 function timeAgo(iso: string): string {
@@ -90,6 +91,14 @@ export function SyncStatusCard() {
             </div>
           </div>
         ))}
+      </div>
+      <div style={{
+        marginTop: 'var(--space-md)',
+        fontSize: '0.65rem',
+        color: 'var(--text-muted)',
+        lineHeight: 1.6,
+      }}>
+        주가는 매일 장 마감 후 16:00(KST) 1회 · 공시·경제지표·재무지표·100대 지표·경제 소식은 매시간 · 재무제표 원본은 주 1회(일요일) 자동 갱신됩니다.
       </div>
     </div>
   )

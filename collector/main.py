@@ -137,14 +137,27 @@ def main():
 
     if args.daemon:
         from datetime import datetime
-        from ecos.keystat_pipeline import sync_macro_keystats
-        from rss.briefing_pipeline import sync_policy_briefings
+        from dart.dart_pipeline     import sync_disclosures
+        from market.market_pipeline import sync_daily_prices, calculate_financial_metrics
+        from ecos.ecos_pipeline     import sync_all_indicators
+        from ecos.keystat_pipeline  import sync_macro_keystats
+        from rss.briefing_pipeline  import sync_policy_briefings
 
         logger.info(f"스케줄러 데몬 시작 (현재 시각: {datetime.now()})")
-        schedule.every().day.at("16:30").do(run_daily)            # 장 마감 후
-        schedule.every().sunday.at("02:00").do(run_weekly)        # 주말 새벽
-        schedule.every().hour.do(sync_macro_keystats)             # 100대 통계지표 매시간
-        schedule.every(3).hours.do(sync_policy_briefings)         # 경제 소식 RSS 3시간마다
+
+        # 매시간, 10분 간격으로 스태거 — 작업이 동시에 몰리지 않게 부하 분산
+        schedule.every().hour.at(":00").do(sync_disclosures, days_back=1)      # 공시
+        schedule.every().hour.at(":20").do(sync_all_indicators, years_back=1)  # 경제지표 시계열
+        schedule.every().hour.at(":30").do(calculate_financial_metrics)        # 재무지표 계산
+        schedule.every().hour.at(":40").do(sync_macro_keystats)                # 100대 통계지표
+        schedule.every().hour.at(":50").do(sync_policy_briefings)              # 경제 소식 RSS
+
+        # 일별 주가는 KRX 종가(EOD) — 장 마감(15:30) + FDR 15~20분 지연 고려해 하루 1회만
+        # (장중 시간당 갱신은 종가 미확정이라 무의미)
+        schedule.every().day.at("16:00").do(sync_daily_prices)                 # 일별 주가
+
+        # 재무제표 '원본' 배치는 DART 일일 한도(10,000콜)·소요시간(~30분) 때문에 매시간 불가 → 주 1회 유지
+        schedule.every().sunday.at("02:00").do(run_weekly)                     # 재무제표 원본 + 재무지표 재계산
 
         # 데몬 부팅 직후 한 번 실행해서 DB 비어있어도 즉시 채움
         try:

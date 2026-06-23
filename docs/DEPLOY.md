@@ -140,7 +140,7 @@ docker compose --profile init run --rm collector-init --weekly
 ```
 
 이후 갱신은 `collector-daemon`이 자동 수행한다
-(매일 16:30 KST `--daily` / 일요일 02:00 `--weekly` / 매시간 100대 통계지표 / 3시간마다 정책브리핑 RSS).
+(매시간 스태거: :00 공시 · :20 경제지표 · :30 재무지표 · :40 100대 통계지표 · :50 경제소식 / 주가 16:00 / 재무제표 원본은 일요일 02:00).
 
 ---
 
