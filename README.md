@@ -55,7 +55,7 @@ stock_app/
 ```
 [DART]   [ECOS]   [FinanceDataReader (KRX)]   [정책브리핑 RSS]
    ↓        ↓              ↓                        ↓
-   [ Python Collector — 매일 16:30 · 일 02:00 · 매시간(100대 지표) · 3시간(RSS) ]
+   [ Python Collector — 매시간 스태거(공시·경제지표·재무지표·100대지표·경제소식) · 주가 장마감후 16:00 · 재무제표 원본 일 02:00 ]
               ↓
          [ PostgreSQL ]
               ↓
@@ -129,7 +129,7 @@ docker-compose run --rm collector-daemon <옵션>
 | `--ecos` | 경제지표만 갱신 |
 | `--rss` | 경제 소식(정책브리핑 RSS) 갱신 |
 | `--backfill --ticker 005930 --start 2020-01-01` | 특정 종목 과거 주가 백필 |
-| `--daemon` | 스케줄러 (매일 16:30 `--daily` / 일 02:00 `--weekly` / 매시간 100대 지표 / 3시간마다 RSS) |
+| `--daemon` | 스케줄러 (매시간 스태거: :00 공시·:20 경제지표·:30 재무지표·:40 100대지표·:50 경제소식 / 주가 16:00 / 재무제표 원본 일 02:00 `--weekly`) |
 
 ### 진단 스크립트 (`collector/scripts/`)
 

@@ -95,7 +95,7 @@ services:
     profiles:
       - init
 
-  # ── Python Collector (스케줄 데몬 — 매일 16:30, 일요일 02:00) ────
+  # ── Python Collector (스케줄 데몬 — 매시간 스태거 + 주가 16:00 + 재무제표 원본 일 02:00) ────
   collector-daemon:
     build: ./collector
     container_name: stockapp-collector-daemon
