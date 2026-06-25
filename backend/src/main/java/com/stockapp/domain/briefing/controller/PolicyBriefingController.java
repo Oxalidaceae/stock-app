@@ -1,6 +1,7 @@
 package com.stockapp.domain.briefing.controller;
 
 import com.stockapp.common.response.ApiResponse;
+import com.stockapp.common.response.PageResponse;
 import com.stockapp.domain.briefing.dto.BriefingDateResponse;
 import com.stockapp.domain.briefing.dto.PolicyBriefingResponse;
 import com.stockapp.domain.briefing.service.PolicyBriefingService;
@@ -25,11 +26,14 @@ public class PolicyBriefingController {
         return ApiResponse.success(briefingService.getDates(ministry));
     }
 
-    /** 선택한 날짜의 소식 목록. */
+    /** 소식 목록 — date 지정 시 그 날짜만, 미지정 시 전체(최근순). */
     @GetMapping
-    public ApiResponse<List<PolicyBriefingResponse>> getBriefings(
+    public ApiResponse<PageResponse<PolicyBriefingResponse>> getBriefings(
             @RequestParam(required = false) String ministry,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ApiResponse.success(briefingService.getBriefingsByDate(ministry, date));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "false") boolean curatedOnly,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        return ApiResponse.success(briefingService.getBriefings(ministry, date, curatedOnly, page, size));
     }
 }

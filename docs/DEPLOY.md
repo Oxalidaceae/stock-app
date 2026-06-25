@@ -114,7 +114,7 @@ AUTH_COOKIE_SECURE=true
 `ADMIN_USERNAME`과 `ADMIN_PASSWORD`는 최초 관리자 계정 생성에 사용된다.
 이미 같은 아이디가 존재하면 재시작해도 비밀번호를 덮어쓰지 않는다.
 배포 후 `https://jipyo.net/login`에서 로그인하고 `/admin`의 **기사 편집** 탭에서
-수집된 정책브리핑 기사에 자체 해설을 작성한 뒤 게시한다.
+수집된 정책브리핑 기사에 자체 요약을 작성한 뒤 게시한다.
 
 ### 광고/법적 페이지 placeholder 교체 (AdSense 신청 시 필수)
 

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { useBriefingDates, useBriefingsByDate } from '../hooks/useBriefings'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
+import { useBriefingDates, useBriefings } from '../hooks/useBriefings'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
-import type { PolicyBriefing } from '../types/api'
+import type { PolicyBriefing, BriefingDate } from '../types/api'
 
 // 수집 대상 부처 (collector POLICY_BRIEFING_FEEDS 와 일치)
 const MINISTRIES = ['전체', '기획재정부', '금융위원회', '관세청']
@@ -31,6 +31,26 @@ function splitLabels(value: string | null): string[] {
     : []
 }
 
+function DateChip({ d, active, onSelect }: { d: BriefingDate; active: boolean; onSelect: (date: string) => void }) {
+  return (
+    <button
+      className="btn btn-sm"
+      onClick={() => onSelect(d.date)}
+      title={active ? '다시 누르면 필터 해제' : undefined}
+      style={{
+        flex: '0 0 auto',
+        whiteSpace: 'nowrap',
+        background: active ? 'var(--accent-orange-dim)' : undefined,
+        color: active ? 'var(--accent-orange)' : undefined,
+        borderColor: active ? 'var(--accent-orange)' : undefined,
+      }}
+    >
+      {fmtTabDate(d.date)}
+      <span style={{ marginLeft: 5, color: 'var(--text-muted)', fontSize: '0.7rem' }}>{d.count}</span>
+    </button>
+  )
+}
+
 function BriefingArticle({ b }: { b: PolicyBriefing }) {
   const impactTags = splitLabels(b.impactTags)
   const indicators = splitLabels(b.relatedIndicators)
@@ -47,6 +67,15 @@ function BriefingArticle({ b }: { b: PolicyBriefing }) {
           <span className="badge" style={{ color: 'var(--accent-orange)', borderColor: 'var(--accent-orange-dim)' }}>
             {b.ministry || '기타'}
           </span>
+          {b.editorNote && (
+            <span className="badge" style={{
+              color: 'var(--accent-orange)',
+              background: 'var(--accent-orange-dim)',
+              borderColor: 'var(--accent-orange)',
+            }}>
+              요약
+            </span>
+          )}
           <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{fmtDateTime(b.publishedAt)}</span>
         </div>
         <div style={{ color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 600, marginBottom: 4 }}>
@@ -78,7 +107,7 @@ function BriefingArticle({ b }: { b: PolicyBriefing }) {
           }}
         >
           <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--accent-orange)', marginBottom: 6 }}>
-            Jipyo 해설
+            Jipyo 요약
           </div>
           <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.75 }}>
             {b.editorNote}
@@ -106,21 +135,64 @@ function BriefingArticle({ b }: { b: PolicyBriefing }) {
 
 export default function NewsPage() {
   const [ministry, setMinistry] = useState('전체')
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)  // null = 전체(최근순)
+  const [curatedOnly, setCuratedOnly] = useState(false)                   // 요약(게시)만 보기
+  const [page, setPage] = useState(0)
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
   const apiMinistry = ministry === '전체' ? '' : ministry
 
-  const { data: dates } = useBriefingDates(apiMinistry)
-  const { data: articles, isLoading, error } = useBriefingsByDate(apiMinistry, selectedDate)
+  // 요약만 보기일 땐 날짜 필터를 적용하지 않고 전체 요약을 최근순으로
+  const effectiveDate = curatedOnly ? null : selectedDate
 
-  // 날짜 목록이 로드되면(또는 부처 변경 시) 가장 최근 날짜를 기본 선택
+  const { data: dates } = useBriefingDates(apiMinistry)
+  const { data, isLoading, error } = useBriefings(apiMinistry, effectiveDate, curatedOnly, page)
+
+  // 날짜를 월(YYYY-MM)로 묶음 — 최신 월이 맨 앞 (백엔드가 최신순 반환)
+  const monthGroups = useMemo(() => {
+    const map = new Map<string, BriefingDate[]>()
+    for (const d of dates ?? []) {
+      const month = d.date.slice(0, 7)
+      const list = map.get(month) ?? []
+      list.push(d)
+      map.set(month, list)
+    }
+    return Array.from(map.entries()).map(([month, days]) => ({ month, days }))
+  }, [dates])
+
+  // 가장 최근 월은 항상 개별 날짜로 펼쳐 둔다
+  const currentMonth = monthGroups[0]?.month
+
+  // 부처가 바뀌면 그 부처의 가장 최근 날짜로 1회 기본 선택 (이후 사용자의 해제/선택은 유지)
+  const defaultedFor = useRef<string | null>(null)
   useEffect(() => {
     if (!dates) return
-    if (dates.length === 0) {
-      setSelectedDate(null)
-    } else if (!selectedDate || !dates.some((d) => d.date === selectedDate)) {
-      setSelectedDate(dates[0].date)
+    if (defaultedFor.current !== ministry) {
+      defaultedFor.current = ministry
+      setSelectedDate(dates.length > 0 ? dates[0].date : null)
+      setPage(0)
     }
-  }, [dates, selectedDate])
+  }, [dates, ministry])
+
+  const selectDate = (date: string) => {
+    setSelectedDate((prev) => (prev === date ? null : date))  // 같은 날짜 재클릭 → 해제(전체)
+    setPage(0)
+  }
+
+  const toggleMonth = (month: string) => {
+    setExpandedMonths((prev) => {
+      const next = new Set(prev)
+      if (next.has(month)) next.delete(month)
+      else next.add(month)
+      return next
+    })
+  }
+
+  const toggleCurated = () => {
+    setCuratedOnly((v) => !v)
+    setPage(0)
+  }
+
+  const articles = data?.content
 
   return (
     <>
@@ -155,45 +227,74 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* 날짜 탭 (가로 스크롤) */}
-      {dates && dates.length > 0 && (
+      {/* 날짜 탭 — 요약만 보기일 땐 숨김. 이번 달은 개별 날짜, 이전 달은 접힌 월(클릭 시 펼침) */}
+      {!curatedOnly && monthGroups.length > 0 && (
         <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-            {dates.map((d) => {
-              const active = d.date === selectedDate
+            {monthGroups.map((g) => {
+              const dayChips = g.days.map((d) => (
+                <DateChip key={d.date} d={d} active={d.date === selectedDate} onSelect={selectDate} />
+              ))
+
+              // 최신 월 → 개별 날짜만
+              if (g.month === currentMonth) return dayChips
+
+              // 이전 월 → 접기/펼치기 토글
+              const expanded = expandedMonths.has(g.month)
+              const monthTotal = g.days.reduce((sum, d) => sum + d.count, 0)
               return (
-                <button
-                  key={d.date}
-                  className="btn btn-sm"
-                  onClick={() => setSelectedDate(d.date)}
-                  style={{
-                    flex: '0 0 auto',
-                    whiteSpace: 'nowrap',
-                    background: active ? 'var(--accent-orange-dim)' : undefined,
-                    color: active ? 'var(--accent-orange)' : undefined,
-                    borderColor: active ? 'var(--accent-orange)' : undefined,
-                  }}
-                >
-                  {fmtTabDate(d.date)}
-                  <span style={{ marginLeft: 5, color: 'var(--text-muted)', fontSize: '0.7rem' }}>{d.count}</span>
-                </button>
+                <Fragment key={g.month}>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => toggleMonth(g.month)}
+                    style={{
+                      flex: '0 0 auto',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 600,
+                      background: expanded ? 'var(--bg-tertiary)' : undefined,
+                    }}
+                  >
+                    {g.month.replace('-', '.')} {expanded ? '▾' : '▸'}
+                    {!expanded && (
+                      <span style={{ marginLeft: 5, color: 'var(--text-muted)', fontSize: '0.7rem' }}>{monthTotal}</span>
+                    )}
+                  </button>
+                  {expanded && dayChips}
+                </Fragment>
               )
             })}
           </div>
         </div>
       )}
 
-      {/* 선택한 날짜의 소식 */}
+      {/* 소식 목록 */}
       <div className="card">
         <div className="card-header">
           <span className="card-title">
-            {selectedDate ? `${fmtTabDate(selectedDate)} 경제 소식` : '경제 소식'}
+            {curatedOnly
+              ? 'Jipyo 요약'
+              : selectedDate
+                ? `${fmtTabDate(selectedDate)} 경제 소식`
+                : '전체 소식 · 최근순'}
           </span>
-          {articles && (
-            <span style={{ marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              총 <strong style={{ color: 'var(--accent-orange)' }}>{articles.length}</strong>건
-            </span>
-          )}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+            <button
+              className="btn btn-sm"
+              onClick={toggleCurated}
+              style={{
+                background: curatedOnly ? 'var(--accent-orange-dim)' : undefined,
+                color: curatedOnly ? 'var(--accent-orange)' : undefined,
+                borderColor: curatedOnly ? 'var(--accent-orange)' : undefined,
+              }}
+            >
+              요약만 보기
+            </button>
+            {data && (
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                총 <strong style={{ color: 'var(--accent-orange)' }}>{data.totalElements.toLocaleString()}</strong>건
+              </span>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -201,11 +302,27 @@ export default function NewsPage() {
         ) : error ? (
           <ErrorFallback />
         ) : articles && articles.length ? (
-          <div>
-            {articles.map((b) => <BriefingArticle key={b.id} b={b} />)}
-          </div>
+          <>
+            <div>
+              {articles.map((b) => <BriefingArticle key={b.id} b={b} />)}
+            </div>
+
+            {data && data.totalPages > 1 && (
+              <div className="pagination">
+                <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(page - 1)}>←</button>
+                <span className="pagination-info">{page + 1} / {data.totalPages}</span>
+                <button
+                  className="btn btn-sm"
+                  disabled={page + 1 >= data.totalPages}
+                  onClick={() => setPage(page + 1)}
+                >→</button>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="empty-state">표시할 소식이 없습니다</div>
+          <div className="empty-state">
+            {curatedOnly ? '아직 게시된 요약이 없습니다' : '표시할 소식이 없습니다'}
+          </div>
         )}
       </div>
     </>

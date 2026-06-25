@@ -114,10 +114,10 @@ export const getBriefingDates = (ministry?: string) =>
     })
     .then((r) => r.data.data)
 
-export const getBriefingsByDate = (ministry: string | undefined, date: string) =>
+export const getBriefings = (ministry: string | undefined, date: string | null, curatedOnly: boolean, page = 0, size = 30) =>
   client
-    .get<ApiResponse<PolicyBriefing[]>>('/briefings', {
-      params: { ministry: ministry || undefined, date },
+    .get<ApiResponse<PageResponse<PolicyBriefing>>>('/briefings', {
+      params: { ministry: ministry || undefined, date: date || undefined, curatedOnly: curatedOnly || undefined, page, size },
     })
     .then((r) => r.data.data)
 

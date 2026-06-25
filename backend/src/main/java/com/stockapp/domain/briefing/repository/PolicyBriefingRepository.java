@@ -14,17 +14,28 @@ import java.util.List;
 
 public interface PolicyBriefingRepository extends JpaRepository<PolicyBriefing, Long> {
 
-    /** 공개 소식 — 지정한 날짜 범위의 기사 (해설 게시분 PUBLISHED + 수집분 COLLECTED). */
+    /** 공개 소식 — 전체 (최근순). (PUBLISHED + COLLECTED) */
+    @Query("SELECT b FROM PolicyBriefing b " +
+           "WHERE b.editorialStatus IN :statuses " +
+           "AND (:ministry IS NULL OR :ministry = '' OR b.ministry = :ministry) " +
+           "ORDER BY b.publishedAt DESC, b.id DESC")
+    Page<PolicyBriefing> findPublic(
+            @Param("statuses") Collection<EditorialStatus> statuses,
+            @Param("ministry") String ministry,
+            Pageable pageable);
+
+    /** 공개 소식 — 지정한 날짜 범위. (PUBLISHED + COLLECTED) */
     @Query("SELECT b FROM PolicyBriefing b " +
            "WHERE b.editorialStatus IN :statuses " +
            "AND (:ministry IS NULL OR :ministry = '' OR b.ministry = :ministry) " +
            "AND b.publishedAt >= :start AND b.publishedAt < :end " +
            "ORDER BY b.publishedAt DESC, b.id DESC")
-    List<PolicyBriefing> findPublicByDateRange(
+    Page<PolicyBriefing> findPublicByDateRange(
             @Param("statuses") Collection<EditorialStatus> statuses,
             @Param("ministry") String ministry,
             @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end);
+            @Param("end") LocalDateTime end,
+            Pageable pageable);
 
     /** 날짜 탭용 — 공개 소식의 날짜별 건수 (최신순). */
     @Query(value = "SELECT DATE(published_at) AS d, COUNT(*) AS cnt " +

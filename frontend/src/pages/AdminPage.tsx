@@ -96,7 +96,7 @@ function BriefingEditor({
 
       <div className="form-group" style={{ marginBottom: 'var(--space-lg)' }}>
         <label className="form-label" htmlFor={`editor-note-${briefing.id}`}>
-          Jipyo 해설
+          Jipyo 요약
         </label>
         <textarea
           id={`editor-note-${briefing.id}`}
