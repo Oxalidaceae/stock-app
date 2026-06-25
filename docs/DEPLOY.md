@@ -104,9 +104,17 @@ DB_NAME=stockapp
 DB_USERNAME=stockapp
 DB_PASSWORD=<위에서 생성한 값>
 JWT_SECRET=<위에서 생성한 값>
+ADMIN_USERNAME=<관리자 아이디>
+ADMIN_PASSWORD=<12자 이상의 강한 비밀번호>
+AUTH_COOKIE_SECURE=true
 ```
 
 > `.env`는 `.gitignore`에 포함되어 커밋되지 않는다. 노트북에만 두고 절대 공개 저장소에 올리지 말 것.
+
+`ADMIN_USERNAME`과 `ADMIN_PASSWORD`는 최초 관리자 계정 생성에 사용된다.
+이미 같은 아이디가 존재하면 재시작해도 비밀번호를 덮어쓰지 않는다.
+배포 후 `https://jipyo.net/login`에서 로그인하고 `/admin`의 **기사 편집** 탭에서
+수집된 정책브리핑 기사에 자체 해설을 작성한 뒤 게시한다.
 
 ### 광고/법적 페이지 placeholder 교체 (AdSense 신청 시 필수)
 
@@ -202,17 +210,15 @@ Cloudflare Tunnel은 아웃바운드 연결만 쓰므로 **공유기 포트포�
 - DB(5432)·Redis(6379)는 compose에서 호스트에 노출하지 않으므로 외부/LAN 어디서도 접근 불가.
 - backend(8080)는 frontend 컨테이너가 내부망으로 호출하므로 외부 개방 불필요.
 
-### (권장) LAN 노출 제거
+### LAN 노출 차단
 
-기본 `docker-compose.yml`은 frontend `3000:80`, backend `8080:8080`을 호스트의 모든 인터페이스(`0.0.0.0`)에 매핑한다.
-→ 같은 와이파이의 다른 기기가 `http://<노트북_LAN_IP>:3000` 으로 직접 접근 가능하다.
-
-cloudflared는 `localhost`로만 붙으면 되므로, LAN 노출이 불필요하면 매핑을 루프백으로 제한한다:
+기본 `docker-compose.yml`은 frontend와 backend 포트를 루프백으로만 노출한다.
+cloudflared는 `localhost`로 접근하므로 LAN 또는 외부에 직접 포트를 개방할 필요가 없다.
 
 ```yaml
   frontend:
     ports:
-      - "127.0.0.1:3000:80"   # 0.0.0.0 → 127.0.0.1
+      - "127.0.0.1:3000:80"
   backend:
     ports:
       - "127.0.0.1:8080:8080"
@@ -341,12 +347,14 @@ Get-Service cloudflared           # 상태 확인
 ## 9. 배포 전 체크리스트
 
 - [ ] `.env`의 `DB_PASSWORD`·`JWT_SECRET`를 강한 랜덤값으로 교체했는가
+- [ ] `ADMIN_USERNAME`·`ADMIN_PASSWORD`를 설정하고 관리자 로그인을 확인했는가
+- [ ] 운영 환경의 `AUTH_COOKIE_SECURE=true`를 확인했는가
 - [ ] `.env`가 커밋되지 않았는지 확인 (`git status`)
 - [ ] Cloudflare 터널이 윈도우 서비스로 등록되고 `StartType: Automatic`인가
 - [ ] 대시보드 Public Hostname이 `localhost:3000`으로 연결돼 HTTPS 접속이 되는가
 - [ ] 절전/화면 끄기 비활성(`powercfg`) 적용했는가
 - [ ] 무인 자동 로그인 + Docker Desktop 자동 시작을 켰는가 (재부팅 복구)
-- [ ] (권장) frontend/backend 포트를 `127.0.0.1`로 제한해 LAN 노출을 막았는가
+- [ ] frontend/backend 포트가 `127.0.0.1`로 제한되어 있는가
 - [ ] 초기 데이터 적재(`--init` + `--weekly`) 완료했는가
 - [ ] Privacy/Terms 페이지의 placeholder(`OPERATOR`·`SITE_DOMAIN` 등) 교체했는가
 

@@ -768,3 +768,15 @@ a:hover {
   .app-main { margin-left: 0; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 }
+
+.admin-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.4fr);
+  gap: var(--space-lg);
+}
+
+@media (max-width: 960px) {
+  .admin-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}

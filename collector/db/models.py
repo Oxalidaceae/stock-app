@@ -158,5 +158,11 @@ class PolicyBriefing(Base):
     link         = Column(String(1000), nullable=False, unique=True)
     published_at = Column(DateTime)
     collected_at = Column(DateTime, server_default=func.now())
-
+    editor_note        = Column(Text)
+    impact_tags        = Column(String(500))
+    related_indicators = Column(String(500))
+    editorial_status   = Column(String(20), nullable=False, server_default="COLLECTED")
+    reviewed_by        = Column(BigInteger, ForeignKey("app_users.id"))
+    reviewed_at        = Column(DateTime)
+    updated_at         = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

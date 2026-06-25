@@ -11,8 +11,11 @@ import MacroPage from './pages/MacroPage'
 import NewsPage from './pages/NewsPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
+import LoginPage from './pages/LoginPage'
+import AdminPage from './pages/AdminPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
+import { RequireAdmin } from './components/RequireAdmin'
 import { useThemeStore } from './stores/themeStore'
 
 export default function App() {
@@ -34,6 +37,15 @@ export default function App() {
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/admin"
+          element={(
+            <RequireAdmin>
+              <AdminPage />
+            </RequireAdmin>
+          )}
+        />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsPage />} />
       </Route>

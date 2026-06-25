@@ -18,6 +18,10 @@ public class PolicyBriefingResponse implements Serializable {
     private final String source;
     private final String link;
     private final LocalDateTime publishedAt;
+    private final String editorNote;
+    private final String impactTags;
+    private final String relatedIndicators;
+    private final LocalDateTime reviewedAt;
 
     public static PolicyBriefingResponse from(PolicyBriefing b) {
         return new PolicyBriefingResponse(
@@ -27,7 +31,11 @@ public class PolicyBriefingResponse implements Serializable {
                 b.getMinistry(),
                 b.getSource(),
                 b.getLink(),
-                b.getPublishedAt()
+                b.getPublishedAt(),
+                b.getEditorNote(),
+                b.getImpactTags(),
+                b.getRelatedIndicators(),
+                b.getReviewedAt()
         );
     }
 }

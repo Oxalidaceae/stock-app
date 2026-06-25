@@ -12,7 +12,7 @@ import type { ReactNode } from 'react'
 
 const SITE_NAME = 'Jipyo (지표)'
 const SITE_DOMAIN = 'https://jipyo.net'
-const OPERATOR = 'Jipyo 운영자'
+const OPERATOR = 'Jipyo 개인정보 보호 담당자'
 const CONTACT_EMAIL = 'jipyopage@gmail.com'
 const EFFECTIVE_DATE = '2026년 6월 21일'
 
@@ -53,9 +53,9 @@ export default function PrivacyPolicyPage() {
         </p>
 
         <Section no={1} title="수집하는 개인정보의 항목 및 수집 방법">
-          본 사이트는 회원가입·로그인 등 별도의 개인정보를 직접 입력받는 기능을 제공하지 않습니다.
-          다만 서비스 이용 과정에서 다음의 정보가 자동으로 생성·수집될 수 있습니다.
+          본 사이트는 로그인 및 계정 기능을 제공하며, 서비스 이용 과정에서 다음 정보를 처리할 수 있습니다.
           <List items={[
+            '계정 정보: 아이디, 암호화되어 저장되는 비밀번호 해시, 계정 권한 및 상태',
             '자동 수집 정보: 접속 IP 주소, 쿠키(cookie), 방문 일시, 서비스 이용 기록, 브라우저 및 OS 종류, 기기 정보',
             <>광고 서비스를 통한 정보: 제3자 광고 사업자(Google 등)가 쿠키를 통해 수집하는 광고 식별 정보 (아래 제4조 참조)</>,
           ]} />
@@ -64,6 +64,7 @@ export default function PrivacyPolicyPage() {
         <Section no={2} title="개인정보의 수집 및 이용 목적">
           수집한 정보는 다음의 목적으로만 이용됩니다.
           <List items={[
+            '이용자 인증, 계정 및 접근 권한 관리',
             '서비스 제공 및 운영, 접속 빈도 분석 및 통계',
             '서비스 이용 환경 최적화 및 오류·부정 이용 방지',
             '맞춤형 광고 제공 및 광고 효과 측정 (이용자 동의 범위 내)',
@@ -71,6 +72,7 @@ export default function PrivacyPolicyPage() {
         </Section>
 
         <Section no={3} title="개인정보의 보유 및 이용 기간">
+          계정 정보는 계정이 유지되는 동안 보관하며, 계정 삭제 또는 서비스 종료 시 관련 법령에 따라 필요한 경우를 제외하고 지체 없이 파기합니다.
           자동 수집된 접속 로그는 통계 및 보안 목적으로 수집일로부터 최대 1년간 보관 후 파기합니다.
           쿠키는 이용자가 브라우저 설정을 통해 언제든지 삭제할 수 있으며, 관련 법령에서 별도의 보관 기간을 정한 경우 해당 기간을 따릅니다.
         </Section>
@@ -80,6 +82,7 @@ export default function PrivacyPolicyPage() {
             본 사이트는 이용자에게 맞춤형 서비스 및 광고를 제공하기 위해 쿠키를 사용합니다.
           </p>
           <List items={[
+            <>로그인 상태 유지를 위해 HttpOnly·Secure 속성이 적용된 인증 쿠키를 사용할 수 있습니다. 인증 쿠키에는 원문 비밀번호가 저장되지 않습니다.</>,
             <>Google을 포함한 제3자 광고 사업자는 쿠키를 사용하여 이용자의 본 사이트 및 다른 웹사이트 방문 기록에 기반한 광고를 게재합니다.</>,
             <>Google의 광고 쿠키(DART 쿠키 등) 사용으로 Google과 그 파트너는 이용자의 방문 기록을 바탕으로 광고를 제공할 수 있습니다.</>,
             <>이용자는 <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-orange)' }}>Google 광고 설정</a>에서 맞춤 광고를 비활성화할 수 있습니다.</>,

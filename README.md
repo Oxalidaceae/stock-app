@@ -17,6 +17,7 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 - **거시 100대 통계지표** — 한국은행 주요 통계 100선 (매시간 갱신)
 - **경제 소식** — 정책브리핑 RSS 기반 경제 뉴스 (3시간마다 갱신)
 - **종목 스크리너** — 재무지표·시장·시총 조건 기반 필터링
+- **경제 소식 편집** — 관리자가 RSS 기사를 선별하고 자체 해설을 작성한 뒤 공개
 
 ---
 
@@ -84,8 +85,14 @@ ECOS_API_KEY=발급받은_ECOS_키
 DB_NAME=stockapp
 DB_USERNAME=stockapp
 DB_PASSWORD=stockapp
-JWT_SECRET=어떤_긴_랜덤_문자열
+JWT_SECRET=32바이트_이상의_긴_랜덤_문자열
+ADMIN_USERNAME=관리자_아이디
+ADMIN_PASSWORD=12자_이상의_강한_비밀번호
+AUTH_COOKIE_SECURE=false
 ```
+
+`AUTH_COOKIE_SECURE=false`는 로컬 HTTP 개발용이다. HTTPS로 운영할 때는 반드시 `true`로 설정한다.
+최초 기동 시 `ADMIN_USERNAME` 계정이 `ADMIN` 권한으로 생성되며 비밀번호는 BCrypt로 해시되어 저장된다.
 
 ### 3. 인프라 + 백엔드 + 프론트 + 자동 데몬 기동
 
@@ -111,6 +118,7 @@ docker-compose --profile init run --rm collector-init --weekly
 
 - 프론트엔드: <http://localhost:3000>
 - 백엔드 API: <http://localhost:8080/api>
+- 관리자 로그인: <http://localhost:3000/login>
 
 ---
 
