@@ -153,6 +153,39 @@ export interface PolicyBriefing {
   source: string | null
   link: string
   publishedAt: string | null
+  editorNote: string | null
+  impactTags: string | null
+  relatedIndicators: string | null
+  reviewedAt: string | null
+}
+
+export interface BriefingDate {
+  date: string   // 'YYYY-MM-DD'
+  count: number
+}
+
+export type UserRole = 'ADMIN' | 'USER'
+
+export interface AuthUser {
+  id: number
+  username: string
+  role: UserRole
+}
+
+export type EditorialStatus = 'COLLECTED' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+
+export interface AdminPolicyBriefing extends PolicyBriefing {
+  collectedAt: string | null
+  editorialStatus: EditorialStatus
+  reviewedBy: string | null
+  updatedAt: string
+}
+
+export interface UpdateBriefingEditorialRequest {
+  editorNote: string
+  impactTags: string
+  relatedIndicators: string
+  editorialStatus: EditorialStatus
 }
 
 /* ── Economic ────────────────────────────────────────── */

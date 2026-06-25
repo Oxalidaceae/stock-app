@@ -13,6 +13,11 @@ import type {
   EconomicIndicator,
   MacroKeystat,
   PolicyBriefing,
+  BriefingDate,
+  AuthUser,
+  AdminPolicyBriefing,
+  EditorialStatus,
+  UpdateBriefingEditorialRequest,
   SyncStatus,
   ScreenerRequest,
   ScreenerResult,
@@ -102,11 +107,64 @@ export const getMacroKeystats = () =>
 
 /* ── Policy Briefing (경제 소식) ──────────── */
 
-export const getBriefings = (ministry?: string, page = 0, size = 30) =>
+export const getBriefingDates = (ministry?: string) =>
+  client
+    .get<ApiResponse<BriefingDate[]>>('/briefings/dates', {
+      params: { ministry: ministry || undefined },
+    })
+    .then((r) => r.data.data)
+
+export const getBriefings = (ministry: string | undefined, date: string | null, curatedOnly: boolean, page = 0, size = 30) =>
   client
     .get<ApiResponse<PageResponse<PolicyBriefing>>>('/briefings', {
-      params: { ministry: ministry || undefined, page, size },
+      params: { ministry: ministry || undefined, date: date || undefined, curatedOnly: curatedOnly || undefined, page, size },
     })
+    .then((r) => r.data.data)
+
+/* ── Authentication ───────────────────────────────────── */
+
+export const login = (username: string, password: string) =>
+  client
+    .post<ApiResponse<AuthUser>>('/auth/login', { username, password })
+    .then((r) => r.data.data)
+
+export const logout = () =>
+  client
+    .post<ApiResponse<null>>('/auth/logout')
+    .then((r) => r.data.data)
+
+export const getCurrentUser = () =>
+  client
+    .get<ApiResponse<AuthUser>>('/auth/me')
+    .then((r) => r.data.data)
+
+/* ── Admin: Policy Briefing ───────────────────────────── */
+
+export const getAdminBriefings = (
+  status?: EditorialStatus,
+  ministry?: string,
+  q?: string,
+  page = 0,
+  size = 20,
+) =>
+  client
+    .get<ApiResponse<PageResponse<AdminPolicyBriefing>>>('/admin/briefings', {
+      params: {
+        status: status || undefined,
+        ministry: ministry || undefined,
+        q: q || undefined,
+        page,
+        size,
+      },
+    })
+    .then((r) => r.data.data)
+
+export const updateBriefingEditorial = (
+  id: number,
+  request: UpdateBriefingEditorialRequest,
+) =>
+  client
+    .put<ApiResponse<AdminPolicyBriefing>>(`/admin/briefings/${id}`, request)
     .then((r) => r.data.data)
 
 /* ── Sync Status ──────────────────────────── */
