@@ -17,6 +17,10 @@ function Footer() {
       }}
     >
       <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 6, flexWrap: 'wrap' }}>
+        <Link to="/about" style={{ color: 'var(--text-secondary)' }}>소개</Link>
+        <span style={{ opacity: 0.4 }}>·</span>
+        <Link to="/contact" style={{ color: 'var(--text-secondary)' }}>문의하기</Link>
+        <span style={{ opacity: 0.4 }}>·</span>
         <Link to="/privacy" style={{ color: 'var(--text-secondary)' }}>개인정보처리방침</Link>
         <span style={{ opacity: 0.4 }}>·</span>
         <Link to="/terms" style={{ color: 'var(--text-secondary)' }}>이용약관 및 면책조항</Link>
