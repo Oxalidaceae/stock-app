@@ -14,7 +14,7 @@ import java.util.List;
 
 public interface PolicyBriefingRepository extends JpaRepository<PolicyBriefing, Long> {
 
-    /** 공개 소식 — 전체 (최근순). (PUBLISHED + COLLECTED) */
+    /** 공개 소식 — 전체. 고정 없이 순수 최신순(날짜 필터 해제 상태). (PUBLISHED + COLLECTED) */
     @Query("SELECT b FROM PolicyBriefing b " +
            "WHERE b.editorialStatus IN :statuses " +
            "AND (:ministry IS NULL OR :ministry = '' OR b.ministry = :ministry) " +
@@ -24,12 +24,13 @@ public interface PolicyBriefingRepository extends JpaRepository<PolicyBriefing, 
             @Param("ministry") String ministry,
             Pageable pageable);
 
-    /** 공개 소식 — 지정한 날짜 범위. (PUBLISHED + COLLECTED) */
+    /** 공개 소식 — 지정한 날짜 범위. 같은 날이므로 요약(PUBLISHED)을 상단 고정 후 시간 최신순. (PUBLISHED + COLLECTED) */
     @Query("SELECT b FROM PolicyBriefing b " +
            "WHERE b.editorialStatus IN :statuses " +
            "AND (:ministry IS NULL OR :ministry = '' OR b.ministry = :ministry) " +
            "AND b.publishedAt >= :start AND b.publishedAt < :end " +
-           "ORDER BY b.publishedAt DESC, b.id DESC")
+           "ORDER BY CASE WHEN b.editorNote IS NOT NULL THEN 0 ELSE 1 END, " +
+           "b.publishedAt DESC, b.id DESC")
     Page<PolicyBriefing> findPublicByDateRange(
             @Param("statuses") Collection<EditorialStatus> statuses,
             @Param("ministry") String ministry,
