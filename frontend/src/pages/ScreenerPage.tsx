@@ -47,7 +47,7 @@ export default function ScreenerPage() {
             <input className="form-input" type="number" placeholder="예: 2" value={form.dividendYieldMin ?? ''} onChange={e => update('dividendYieldMin', e.target.value)} />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div className="form-group">
             <label className="form-label">부채비율 ≤</label>
             <input className="form-input" type="number" placeholder="예: 200" value={form.debtRatioMax ?? ''} onChange={e => update('debtRatioMax', e.target.value)} />

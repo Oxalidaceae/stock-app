@@ -176,6 +176,7 @@ a:hover {
 
 .app-main {
   flex: 1;
+  min-width: 0;   /* flex 자식이 콘텐츠 min-content 폭으로 늘어나는 것 방지 → 표 가로 스크롤이 동작 */
   margin-left: var(--sidebar-width);
   display: flex;
   flex-direction: column;
