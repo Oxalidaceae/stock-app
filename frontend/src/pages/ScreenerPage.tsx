@@ -77,6 +77,7 @@ export default function ScreenerPage() {
       <div className="card">
         {isPending ? <LoadingSpinner /> : data?.content.length ? (
           <>
+            <div className="table-scroll">
             <table className="data-table">
               <thead><tr><th>종목</th><th>종목명</th><th>시장</th><th className="num">PER</th><th className="num">PBR</th><th className="num">ROE</th><th className="num">영업이익률</th><th className="num">부채비율</th><th className="num">배당률</th></tr></thead>
               <tbody>
@@ -95,6 +96,7 @@ export default function ScreenerPage() {
                 ))}
               </tbody>
             </table>
+            </div>
             <div className="pagination">
               <span className="pagination-info">{data.totalElements}건 중 {data.content.length}건</span>
             </div>

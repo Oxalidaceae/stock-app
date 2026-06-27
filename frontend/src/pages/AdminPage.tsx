@@ -194,7 +194,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 className="page-title">Admin</h1>
           <p className="page-subtitle">콘텐츠 검토 및 사이트 운영</p>
