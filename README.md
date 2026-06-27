@@ -25,12 +25,12 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 
 | 레이어 | 기술 |
 |---|---|
-| 백엔드 | Spring Boot 3.3, Java 21, Maven, Flyway |
-| 프론트엔드 | React 19, TypeScript, Vite, React Router, TanStack Query |
-| 데이터 수집 | Python 3.11, FinanceDataReader, SQLAlchemy, schedule |
+| 백엔드 | Spring Boot 3.3, Java 17, Maven, Spring Data JPA, Flyway, Spring Security + JWT(JJWT), WebSocket, Actuator, Lombok |
+| 프론트엔드 | React 19, TypeScript, Vite, React Router 7, TanStack Query, Zustand, Recharts, Axios |
+| 데이터 수집 | Python 3.11, FinanceDataReader, SQLAlchemy, pandas, requests, feedparser, schedule |
 | 데이터베이스 | PostgreSQL 16 |
 | 캐시 | Redis 7 (현재 NoOpCacheManager로 비활성) |
-| 인프라 | Docker Compose |
+| 인프라 | Docker Compose, nginx(프론트 서빙·API 프록시), Cloudflare Tunnel(외부 공개), Dozzle(로그 뷰어) |
 
 ---
 
