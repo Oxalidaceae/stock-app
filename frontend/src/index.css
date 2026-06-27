@@ -171,6 +171,7 @@ a:hover {
   left: 0;
   bottom: 0;
   z-index: 100;
+  overflow-y: auto;
 }
 
 .app-main {
@@ -218,6 +219,43 @@ a:hover {
 /* 화면이 좁으면 우측 광고 레일 숨김 */
 @media (max-width: 1280px) {
   .app-rail { display: none; }
+}
+
+/* 모바일 메뉴(햄버거) 버튼 — 데스크톱에선 숨김 */
+.app-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  margin-right: var(--space-md);
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* 드로어 뒤 백드롭 — 모바일 메뉴 열렸을 때만 */
+.app-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+}
+
+/* 넓은 표는 가로 스크롤로 감싸 가로 넘침 방지 */
+.table-scroll {
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ── Sidebar Styles ───────────────────────────────────── */
@@ -736,6 +774,8 @@ a:hover {
   gap: 0;
   border-bottom: 1px solid var(--border-primary);
   margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab {
@@ -745,6 +785,8 @@ a:hover {
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .tab:hover {
@@ -764,9 +806,36 @@ a:hover {
 }
 
 @media (max-width: 768px) {
-  .app-sidebar { display: none; }
+  /* 사이드바를 오프캔버스 드로어로 전환 (display:none 대신 슬라이드) */
+  .app-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-dropdown);
+  }
   .app-main { margin-left: 0; }
+  .app-menu-btn { display: inline-flex; }
+
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+
+  /* 여백 축소 — 좁은 화면에서 가용 폭 확보 */
+  .app-content { padding: var(--space-lg) var(--space-md); }
+  .app-topbar { padding: 0 var(--space-md); }
+
+  /* iOS Safari 입력 포커스 시 자동 확대 방지 (16px 미만이면 확대됨) */
+  .search-input,
+  .form-input,
+  .form-select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* 데스크톱에선 백드롭/드로어 토글 불필요 */
+@media (min-width: 769px) {
+  .app-backdrop { display: none; }
 }
 
 .admin-editor-grid {

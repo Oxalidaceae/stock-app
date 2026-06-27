@@ -20,6 +20,7 @@ export function DataTable<T>({ columns, data, onRowClick, emptyMessage = '데이
   }
 
   return (
+    <div className="table-scroll">
     <table className="data-table">
       <thead>
         <tr>
@@ -48,5 +49,6 @@ export function DataTable<T>({ columns, data, onRowClick, emptyMessage = '데이
         ))}
       </tbody>
     </table>
+    </div>
   )
 }

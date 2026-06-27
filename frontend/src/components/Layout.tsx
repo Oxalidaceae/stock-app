@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { SearchBar } from './SearchBar'
@@ -47,17 +47,28 @@ function Footer() {
 
 export function Layout() {
   const { pathname } = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  // 라우트 이동 시 스크롤을 맨 위로 (푸터 링크 클릭 후에도 새 페이지를 위에서 시작)
+  // 라우트 이동 시 스크롤을 맨 위로 (푸터 링크 클릭 후에도 새 페이지를 위에서 시작) + 모바일 메뉴 닫기
   useEffect(() => {
     window.scrollTo(0, 0)
+    setMenuOpen(false)
   }, [pathname])
 
   return (
     <div className="app-layout">
-      <Sidebar />
+      <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)} />
+      {menuOpen && <div className="app-backdrop" onClick={() => setMenuOpen(false)} />}
       <div className="app-main">
         <header className="app-topbar">
+          <button
+            className="app-menu-btn"
+            aria-label="메뉴 열기"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            ☰
+          </button>
           <SearchBar />
         </header>
         <div className="app-body">

@@ -11,12 +11,17 @@ const links = [
   { to: '/news',        icon: '◰', label: '경제 소식' },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean
+  onNavigate?: () => void
+}
+
+export function Sidebar({ open = false, onNavigate }: SidebarProps) {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggle)
 
   return (
-    <aside className="app-sidebar">
+    <aside className={`app-sidebar${open ? ' open' : ''}`}>
       <div className="sidebar-logo">
         <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <line x1="6" y1="25.5" x2="27.6" y2="25.5" stroke="var(--accent-orange)" strokeOpacity="0.25" strokeWidth="1.4" strokeLinecap="round" />
@@ -38,6 +43,7 @@ export function Sidebar() {
               `sidebar-link${isActive ? ' active' : ''}`
             }
             end={link.to === '/'}
+            onClick={onNavigate}
           >
             <span className="icon">{link.icon}</span>
             {link.label}

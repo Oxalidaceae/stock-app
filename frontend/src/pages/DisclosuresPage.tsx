@@ -88,6 +88,7 @@ export default function DisclosuresPage() {
                   <span style={{ color: 'var(--accent-orange)', fontWeight: 600, fontSize: '0.9rem' }}>{date}</span>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{items.length}건</span>
                 </div>
+                <div className="table-scroll">
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -125,6 +126,7 @@ export default function DisclosuresPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             ))}
 
