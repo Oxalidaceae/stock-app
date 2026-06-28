@@ -78,6 +78,12 @@ const setAttrMeta = (html, key, attr, value) =>
     `$1${escAttr(value)}$2`,
   )
 
+const setCanonical = (html, value) =>
+  html.replace(
+    /(<link rel="canonical" href=")[^"]*(")/,
+    `$1${escAttr(value)}$2`,
+  )
+
 const template = readFileSync(resolve(DIST, 'index.html'), 'utf8')
 
 let count = 0
@@ -91,6 +97,7 @@ for (const r of ROUTES) {
   html = setAttrMeta(html, 'property', 'og:url', url)
   html = setAttrMeta(html, 'name', 'twitter:title', r.title)
   html = setAttrMeta(html, 'name', 'twitter:description', r.description)
+  html = setCanonical(html, url)
 
   const outDir = r.path === '/' ? DIST : resolve(DIST, `.${r.path}`)
   mkdirSync(outDir, { recursive: true })
@@ -98,4 +105,18 @@ for (const r of ROUTES) {
   count++
 }
 
-console.log(`[prerender-meta] ${count}개 경로의 정적 메타 HTML 생성 완료`)
+// 404 페이지: nginx 가 존재하지 않는 경로에 HTTP 404 와 함께 내려주는 정적 셸.
+// JS 미실행 크롤러도 색인하지 않도록 noindex 를 박아 두고, SPA 가 부팅되면
+// "*" 라우트가 NotFoundPage 를 렌더한다. canonical 은 두지 않는다.
+{
+  const notFoundTitle = '페이지를 찾을 수 없습니다 | Jipyo (지표)'
+  let html = template
+  html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escText(notFoundTitle)}</title>`)
+  html = html.replace(
+    /<link rel="canonical" href="[^"]*" \/>\s*/,
+    '<meta name="robots" content="noindex, nofollow" />\n    ',
+  )
+  writeFileSync(resolve(DIST, '404.html'), html)
+}
+
+console.log(`[prerender-meta] ${count}개 경로의 정적 메타 HTML + 404.html 생성 완료`)

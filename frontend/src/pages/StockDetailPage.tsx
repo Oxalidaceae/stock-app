@@ -7,6 +7,7 @@ import { useCompanyDetail } from '../hooks/useCompanies'
 import { useLatestPrice } from '../hooks/useStocks'
 import { useMetrics, useFinancialTrend } from '../hooks/useFinancials'
 import { useDisclosures } from '../hooks/useDisclosures'
+import { usePageMeta } from '../hooks/usePageMeta'
 import { useWatchlistStore } from '../stores/watchlistStore'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
@@ -134,6 +135,16 @@ export default function StockDetailPage() {
 
   const tradingViewUrl = `https://kr.tradingview.com/symbols/KRX-${ticker}/`
   const naverFinanceUrl = `https://finance.naver.com/item/main.naver?code=${ticker}`
+
+  usePageMeta({
+    title: company
+      ? `${company.companyName}(${ticker}) 주가·재무·공시 | Jipyo (지표)`
+      : `${ticker} 종목 정보 | Jipyo (지표)`,
+    description: company
+      ? `${company.companyName}(${ticker})의 주가, 재무제표와 주요 재무비율(PER·PBR·ROE), 최신 DART 공시를 한 곳에서 확인하세요.`
+      : `${ticker} 종목의 주가, 재무제표, 주요 재무비율과 최신 공시를 확인하세요.`,
+    path: ticker ? `/stock/${ticker}` : undefined,
+  })
 
   if (compLoading) return <LoadingSpinner message="기업 정보 로딩 중..." />
   if (compError) return <ErrorFallback message="기업을 찾을 수 없습니다" />
