@@ -1,8 +1,23 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { ApiError } from '../api/client'
 import { useCurrentUser, useLogin } from '../hooks/useAuth'
 import { useNoIndex } from '../hooks/useNoIndex'
+
+/** 로그인 실패 사유를 사용자가 이해하기 쉬운 문구로 변환한다. */
+function loginErrorMessage(error: Error): string {
+  const status = error instanceof ApiError ? error.status : undefined
+  // 인증 실패(잘못된 자격 증명 또는 권한 거부)
+  if (status === 401 || status === 403) {
+    return '아이디 또는 비밀번호가 일치하지 않습니다.'
+  }
+  // 로그인 시도 횟수 초과 등 서버가 안내 문구를 내려준 경우
+  if (status === 429) {
+    return error.message
+  }
+  return '로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+}
 
 export default function LoginPage() {
   useNoIndex('로그인 | Jipyo (지표)')
@@ -82,7 +97,7 @@ export default function LoginPage() {
               marginBottom: 'var(--space-md)',
             }}
           >
-            {loginMutation.error.message}
+            {loginErrorMessage(loginMutation.error)}
           </div>
         )}
 
