@@ -10,6 +10,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-# 컨테이너 mem_limit(2g)의 70%를 최대 힙으로 — docker-compose의 backend mem_limit과 함께 동작.
-# mem_limit이 없으면 호스트(WSL2 VM) 전체를 기준 삼으니 반드시 둘을 같이 설정할 것.
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-XX:MaxMetaspaceSize=256m", "-jar", "app.jar"]
+# 힙을 절대값(-Xmx)으로 명시 캡. WSL2(cgroup v2, 커널 6.x) 환경에서 JVM 자동 컨테이너
+# 메모리 감지가 mem_limit(2g)이 아닌 VM 전체 RAM을 읽는 사례가 있어 MaxRAMPercentage는 신뢰 불가.
+# heap 1280m + metaspace 256m + 스레드/코드캐시 오버헤드 ≈ <2g (compose의 backend mem_limit과 정합).
+ENTRYPOINT ["java", "-Xms256m", "-Xmx1280m", "-XX:MaxMetaspaceSize=256m", "-jar", "app.jar"]

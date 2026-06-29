@@ -379,7 +379,7 @@ wsl --shutdown        # (Docker Desktop 완전 종료 후) — 이후 Docker Des
 
 `memory=` 하드 캡 덕에 VM이 아무리 새도 호스트가 99%에 닿지 못하고, `autoMemoryReclaim`이 평상시 사용량을 그보다 낮게 유지한다.
 
-**② 컨테이너별 메모리 상한 + JVM 힙 캡 (이미 적용됨).** VM 안에서 한 컨테이너가 폭주해 형제를 OOM시키는 걸 막는 방어선. `docker-compose.yml`의 각 서비스 `mem_limit`(postgres 2g · redis 384m · backend 2g · frontend 128m · collector-daemon 1.5g · dozzle 128m)과 `backend/Dockerfile`의 `-XX:MaxRAMPercentage=70`(컨테이너 한도의 70%≈1.4g를 최대 힙으로)이 함께 동작한다. 한 컨테이너가 폭주하면 자기 한도에서 OOM 재시작되어 로그에 남으므로 **진범이 자동 특정**된다.
+**② 컨테이너별 메모리 상한 + JVM 힙 캡 (이미 적용됨).** VM 안에서 한 컨테이너가 폭주해 형제를 OOM시키는 걸 막는 방어선. `docker-compose.yml`의 각 서비스 `mem_limit`(postgres 2g · redis 384m · backend 2g · frontend 128m · collector-daemon 1.5g · dozzle 128m)과 `backend/Dockerfile`의 `-Xmx1280m`(힙 명시 캡 — WSL2 cgroup v2에서 JVM 자동 감지가 VM 전체 RAM을 읽는 문제 회피)이 함께 동작한다. 한 컨테이너가 폭주하면 자기 한도에서 OOM 재시작되어 로그에 남으므로 **진범이 자동 특정**된다.
 
 > ①(`.wslconfig`)을 먼저 적용하는 것을 권장. 그래도 특정 컨테이너가 계속 한도에 부딪히면 그 컨테이너의 누수를 추적한다.
 
