@@ -342,6 +342,47 @@ Get-Service cloudflared           # 상태 확인
 
 라우팅·도메인 변경은 노트북이 아니라 **Cloudflare Zero Trust 대시보드 → Networks → Tunnels**에서 한다.
 
+### 메모리 관리 (램 사용량이 계속 오를 때 · WSL2)
+
+**증상:** 며칠(2~3일) 지나면 윈도우 램 사용량이 99%까지 차고, 재부팅하거나 `wsl --shutdown` 하면 회복됐다가 또 천천히 차오른다.
+
+**원인:** Docker Desktop은 모든 컨테이너를 **WSL2 리눅스 VM 하나**(작업 관리자의 `Vmmem` / `vmmemWSL`) 안에서 돌린다. 이 VM은 메모리를 늘리기만 하고(특히 리눅스 page cache) **윈도우로 잘 반환하지 않으며**, `.wslconfig`로 상한을 안 걸면 호스트 RAM의 상당 부분을 점유해 결국 99%에 도달한다. 컨테이너가 멀쩡해도 발생하는 WSL2 특유의 동작이다.
+
+**어느 쪽인지 확인:**
+
+```powershell
+# 작업 관리자(세부 정보)의 Vmmem/vmmemWSL 메모리 vs 실제 컨테이너 합계 비교
+docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.MemPerc}}"
+docker ps -a --format "table {{.Names}}\t{{.Status}}"   # 잦은 재시작(OOM) 흔적
+```
+
+- `Vmmem`은 거대한데 `docker stats` 합계는 작다 → **WSL2 캐시 미반환** → 아래 ①
+- 특정 컨테이너(특히 backend JVM)가 압도적 → **컨테이너 누수** → ②로 한도에 부딪혀 OOM 재시작되며 로그에 남음
+
+**① WSL2 VM 상한 + 자동 회수 (핵심 · 윈도우11 16GB 기준).** 서버의 `C:\Users\<사용자명>\.wslconfig`:
+
+```ini
+[wsl2]
+memory=10GB                 # VM 하드 캡 — 윈도우11에 ~5GB 남김 (RAM 다르면 호스트−5GB로 조정)
+swap=2GB
+processors=4                # 코어 수에 맞게 (줄 삭제 = 전체 코어 사용)
+
+[experimental]
+autoMemoryReclaim=gradual   # 유휴/캐시 메모리를 윈도우로 능동 반환 (핵심)
+sparseVhd=true              # 디스크 VHD 자동 축소
+```
+
+```powershell
+wsl --update          # autoMemoryReclaim 지원하려면 최신 WSL 필요
+wsl --shutdown        # (Docker Desktop 완전 종료 후) — 이후 Docker Desktop 재실행
+```
+
+`memory=` 하드 캡 덕에 VM이 아무리 새도 호스트가 99%에 닿지 못하고, `autoMemoryReclaim`이 평상시 사용량을 그보다 낮게 유지한다.
+
+**② 컨테이너별 메모리 상한 + JVM 힙 캡 (이미 적용됨).** VM 안에서 한 컨테이너가 폭주해 형제를 OOM시키는 걸 막는 방어선. `docker-compose.yml`의 각 서비스 `mem_limit`(postgres 2g · redis 384m · backend 2g · frontend 128m · collector-daemon 1.5g · dozzle 128m)과 `backend/Dockerfile`의 `-XX:MaxRAMPercentage=70`(컨테이너 한도의 70%≈1.4g를 최대 힙으로)이 함께 동작한다. 한 컨테이너가 폭주하면 자기 한도에서 OOM 재시작되어 로그에 남으므로 **진범이 자동 특정**된다.
+
+> ①(`.wslconfig`)을 먼저 적용하는 것을 권장. 그래도 특정 컨테이너가 계속 한도에 부딪히면 그 컨테이너의 누수를 추적한다.
+
 ---
 
 ## 9. 배포 전 체크리스트
@@ -354,6 +395,7 @@ Get-Service cloudflared           # 상태 확인
 - [ ] 대시보드 Public Hostname이 `localhost:3000`으로 연결돼 HTTPS 접속이 되는가
 - [ ] 절전/화면 끄기 비활성(`powercfg`) 적용했는가
 - [ ] 무인 자동 로그인 + Docker Desktop 자동 시작을 켰는가 (재부팅 복구)
+- [ ] `.wslconfig`로 WSL2 메모리 상한·`autoMemoryReclaim`을 설정했는가 (램 99% 방지 — 8장 "메모리 관리")
 - [ ] frontend/backend 포트가 `127.0.0.1`로 제한되어 있는가
 - [ ] 초기 데이터 적재(`--init` + `--weekly`) 완료했는가
 - [ ] Privacy/Terms 페이지의 placeholder(`OPERATOR`·`SITE_DOMAIN` 등) 교체했는가
