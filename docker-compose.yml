@@ -4,6 +4,7 @@ services:
     image: postgres:16-alpine
     container_name: stockapp-postgres
     restart: unless-stopped
+    mem_limit: 2g
     environment:
       POSTGRES_DB: ${DB_NAME:-stockapp}
       POSTGRES_USER: ${DB_USERNAME:-stockapp}
@@ -24,6 +25,7 @@ services:
     image: redis:7-alpine
     container_name: stockapp-redis
     restart: unless-stopped
+    mem_limit: 384m
     # 호스트 포트 미노출 — 내부 docker 네트워크(redis:6379)로만 접근.
     #   ports: ["127.0.0.1:6379:6379"]
     healthcheck:
@@ -37,6 +39,7 @@ services:
     build: ./backend
     container_name: stockapp-backend
     restart: unless-stopped
+    mem_limit: 2g       # JVM 힙은 Dockerfile의 -XX:MaxRAMPercentage=70 으로 이 한도의 ~70%(≈1.4g)에 캡
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
@@ -68,6 +71,7 @@ services:
     build: ./frontend
     container_name: stockapp-frontend
     restart: unless-stopped
+    mem_limit: 128m
     ports:
       - "127.0.0.1:3000:80"
     depends_on:
@@ -78,6 +82,7 @@ services:
     build: ./collector
     container_name: stockapp-collector-init
     command: ["--init"]
+    mem_limit: 2g
     volumes:
       - ./logs:/logs       # 로그 영속화 (재빌드해도 보존)
     environment:
@@ -105,6 +110,7 @@ services:
     container_name: stockapp-collector-daemon
     command: ["--daemon"]
     restart: unless-stopped
+    mem_limit: 1.5g
     volumes:
       - ./logs:/logs       # 로그 영속화 (재빌드해도 보존)
     environment:
@@ -131,6 +137,7 @@ services:
     image: amir20/dozzle:latest
     container_name: stockapp-dozzle
     restart: unless-stopped
+    mem_limit: 128m
     environment:
       DOZZLE_NO_ANALYTICS: "true"
     volumes:
