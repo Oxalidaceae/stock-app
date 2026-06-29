@@ -39,7 +39,7 @@ services:
     build: ./backend
     container_name: stockapp-backend
     restart: unless-stopped
-    mem_limit: 2g       # JVM 힙은 Dockerfile의 -XX:MaxRAMPercentage=70 으로 이 한도의 ~70%(≈1.4g)에 캡
+    mem_limit: 2g       # JVM 힙은 Dockerfile의 -Xmx1280m 으로 명시 캡 (이 한도 안에 metaspace·오버헤드까지 수용)
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
