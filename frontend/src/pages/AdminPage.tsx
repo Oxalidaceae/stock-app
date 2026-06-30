@@ -6,6 +6,7 @@ import { useCurrentUser, useLogout } from '../hooks/useAuth'
 import { useNoIndex } from '../hooks/useNoIndex'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
+import { ApiError } from '../api/client'
 import type {
   AdminPolicyBriefing,
   EditorialStatus,
@@ -39,6 +40,15 @@ const SAVE_SUCCESS_MESSAGES: Record<EditorialStatus, string> = {
 function formatDate(value: string | null) {
   if (!value) return ''
   return new Date(value).toLocaleString('ko-KR')
+}
+
+// 저장 실패 메시지 — 4xx(검증 실패 등)는 서버가 준 구체 사유를 그대로,
+// 그 외(네트워크·5xx)는 재시도 안내를 보여준다.
+function saveErrorMessage(error: unknown): string {
+  if (error instanceof ApiError && error.status && error.status >= 400 && error.status < 500) {
+    return error.message
+  }
+  return '등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
 function BriefingEditor({
@@ -91,8 +101,8 @@ function BriefingEditor({
           window.alert(SAVE_SUCCESS_MESSAGES[status])
           onSaved(updated)
         },
-        onError: () => {
-          window.alert('등록에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+        onError: (error) => {
+          window.alert(saveErrorMessage(error))
         },
       },
     )
@@ -216,7 +226,7 @@ function BriefingEditor({
 
       {mutation.isError && (
         <div role="alert" style={{ color: 'var(--color-down)', marginBottom: 12 }}>
-          등록에 실패했습니다. 잠시 후 다시 시도해 주세요.
+          {saveErrorMessage(mutation.error)}
         </div>
       )}
 
