@@ -28,6 +28,14 @@ const STATUS_LABELS: Record<EditorialStatus, string> = {
   ARCHIVED: '보관됨',
 }
 
+// 저장 작업별 성공 알림 문구
+const SAVE_SUCCESS_MESSAGES: Record<EditorialStatus, string> = {
+  COLLECTED: '저장되었습니다.',
+  DRAFT: '임시 저장되었습니다.',
+  PUBLISHED: '요약이 게시되었습니다.',
+  ARCHIVED: '보관 처리되었습니다.',
+}
+
 function formatDate(value: string | null) {
   if (!value) return ''
   return new Date(value).toLocaleString('ko-KR')
@@ -41,11 +49,31 @@ function BriefingEditor({
   onSaved: (briefing: AdminPolicyBriefing) => void
 }) {
   const mutation = useUpdateBriefingEditorial()
-  const [editorNote, setEditorNote] = useState(briefing.editorNote ?? '')
-  const [impactTags, setImpactTags] = useState(briefing.impactTags ?? '')
-  const [relatedIndicators, setRelatedIndicators] = useState(briefing.relatedIndicators ?? '')
+
+  // 임시저장(DRAFT)된 글은 빈 상태로 시작하고 배너로 '불러오기'를 안내한다.
+  // 그 외(게시·보관 등 기존 내용이 있는 글)는 편집을 위해 기존 내용을 그대로 채운다.
+  const hasDraft =
+    briefing.editorialStatus === 'DRAFT' &&
+    !!(briefing.editorNote || briefing.impactTags || briefing.relatedIndicators)
+
+  const [editorNote, setEditorNote] = useState(hasDraft ? '' : (briefing.editorNote ?? ''))
+  const [impactTags, setImpactTags] = useState(hasDraft ? '' : (briefing.impactTags ?? ''))
+  const [relatedIndicators, setRelatedIndicators] = useState(hasDraft ? '' : (briefing.relatedIndicators ?? ''))
+  const [draftDismissed, setDraftDismissed] = useState(false)
+
+  const restoreDraft = () => {
+    setEditorNote(briefing.editorNote ?? '')
+    setImpactTags(briefing.impactTags ?? '')
+    setRelatedIndicators(briefing.relatedIndicators ?? '')
+    setDraftDismissed(true)
+  }
 
   const save = (status: EditorialStatus) => {
+    // 게시는 Jipyo 요약(해설)이 비어 있으면 불가 — 백엔드와 동일 규칙
+    if (status === 'PUBLISHED' && !editorNote.trim()) {
+      window.alert('게시하려면 Jipyo 요약을 작성해주세요.')
+      return
+    }
     const request: UpdateBriefingEditorialRequest = {
       editorNote,
       impactTags,
@@ -54,7 +82,19 @@ function BriefingEditor({
     }
     mutation.mutate(
       { id: briefing.id, request },
-      { onSuccess: onSaved },
+      {
+        onSuccess: (updated) => {
+          // 작성 창 초기화 (빈 상태로)
+          setEditorNote('')
+          setImpactTags('')
+          setRelatedIndicators('')
+          window.alert(SAVE_SUCCESS_MESSAGES[status])
+          onSaved(updated)
+        },
+        onError: () => {
+          window.alert('등록에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+        },
+      },
     )
   }
 
@@ -93,6 +133,35 @@ function BriefingEditor({
       >
         {briefing.summary || '원문 요약이 없습니다.'}
       </div>
+
+      {hasDraft && !draftDismissed && (
+        <div
+          role="status"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            flexWrap: 'wrap',
+            padding: 'var(--space-md)',
+            background: 'var(--bg-tertiary)',
+            border: '1px solid var(--accent-orange)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--space-lg)',
+            fontSize: '0.8rem',
+          }}
+        >
+          <span>임시저장된 내용이 있습니다. 불러오시겠습니까?</span>
+          <span style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-sm btn-primary" type="button" onClick={restoreDraft}>
+              불러오기
+            </button>
+            <button className="btn btn-sm" type="button" onClick={() => setDraftDismissed(true)}>
+              닫기
+            </button>
+          </span>
+        </div>
+      )}
 
       <div className="form-group" style={{ marginBottom: 'var(--space-lg)' }}>
         <label className="form-label" htmlFor={`editor-note-${briefing.id}`}>
@@ -147,7 +216,7 @@ function BriefingEditor({
 
       {mutation.isError && (
         <div role="alert" style={{ color: 'var(--color-down)', marginBottom: 12 }}>
-          {mutation.error.message}
+          등록에 실패했습니다. 잠시 후 다시 시도해 주세요.
         </div>
       )}
 
@@ -155,7 +224,12 @@ function BriefingEditor({
         <button className="btn" type="button" disabled={mutation.isPending} onClick={() => save('DRAFT')}>
           임시 저장
         </button>
-        <button className="btn btn-primary" type="button" disabled={mutation.isPending} onClick={() => save('PUBLISHED')}>
+        <button
+          className="btn btn-primary"
+          type="button"
+          disabled={mutation.isPending || !editorNote.trim()}
+          onClick={() => save('PUBLISHED')}
+        >
           게시
         </button>
         <button className="btn" type="button" disabled={mutation.isPending} onClick={() => save('ARCHIVED')}>
