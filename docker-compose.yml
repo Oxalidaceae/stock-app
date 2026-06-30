@@ -5,7 +5,11 @@ services:
     container_name: stockapp-postgres
     restart: unless-stopped
     mem_limit: 2g
+    # 세션 타임존을 KST로 고정 — collected_at/updated_at 의 now() 기본값이 KST로 저장되도록.
+    # (이미 초기화된 볼륨은 TZ env 만으론 안 바뀌므로 -c timezone 으로 명시)
+    command: ["postgres", "-c", "timezone=Asia/Seoul"]
     environment:
+      TZ: Asia/Seoul
       POSTGRES_DB: ${DB_NAME:-stockapp}
       POSTGRES_USER: ${DB_USERNAME:-stockapp}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-stockapp}
@@ -45,6 +49,7 @@ services:
     volumes:
       - ./logs:/logs       # 로그 영속화 (재빌드해도 보존)
     environment:
+      TZ: Asia/Seoul
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-stockapp}
