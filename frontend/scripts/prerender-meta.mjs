@@ -52,6 +52,11 @@ const ROUTES = [
     description: '관심 있는 여러 종목의 재무제표와 주가를 나란히 비교해 보세요.',
   },
   {
+    path: '/board',
+    title: '게시판 — Jipyo 소식과 이야기 | Jipyo (지표)',
+    description: 'Jipyo 운영진이 전하는 공지, 업데이트 소식과 투자 관련 이야기를 모은 게시판입니다.',
+  },
+  {
     path: '/about',
     title: 'Jipyo 소개 — 서비스 목적과 데이터 출처 | Jipyo (지표)',
     description: 'Jipyo(지표)의 서비스 목적, 제공 기능, 데이터 출처와 운영 원칙을 안내합니다.',

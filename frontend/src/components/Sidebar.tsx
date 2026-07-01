@@ -10,6 +10,7 @@ const links = [
   { to: '/macro',       icon: '◇', label: '거시지표' },
   { to: '/news',        icon: '◰', label: '경제 소식' },
   { to: '/guide',       icon: '▤', label: '투자 가이드' },
+  { to: '/board',       icon: '✎', label: '게시판' },
 ]
 
 interface SidebarProps {
