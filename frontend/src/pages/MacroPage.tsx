@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useMacroKeystats } from '../hooks/useMacro'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
+import { PageIntro } from '../components/PageIntro'
 import type { MacroKeystat } from '../types/api'
 
 // 핵심 지표 8개 — 카드 강조 표시
@@ -104,6 +105,12 @@ export default function MacroPage() {
         <h1 className="page-title">Macro Economics</h1>
         <p className="page-subtitle">한국은행 100대 통계지표 — 거시경제 한눈에 보기</p>
       </div>
+
+      <PageIntro guides={[{ to: '/guide/base-rate-and-stocks', label: '기준금리와 주식' }]}>
+        한국은행이 선정한 ‘100대 통계지표’는 시장금리·환율·통화량·성장률 등 한국 경제를 폭넓게
+        조망하는 대표 지표 묶음입니다. 이 페이지는 그 지표들을 분야별로 모아 매시간 갱신해 보여줍니다.
+        개별 종목보다 경기와 유동성의 큰 흐름을 읽고 싶을 때 참고하세요.
+      </PageIntro>
 
       {/* 핵심 지표 — 강조 카드 */}
       {highlights.length > 0 && (

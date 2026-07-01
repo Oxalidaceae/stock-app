@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useRecentDisclosures } from '../hooks/useDisclosures'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
+import { PageIntro } from '../components/PageIntro'
 import type { Disclosure } from '../types/api'
 
 const DART_SEARCH_URL = 'https://dart.fss.or.kr/dsab007/main.do'
@@ -38,6 +39,13 @@ export default function DisclosuresPage() {
         <h1 className="page-title">Disclosures</h1>
         <p className="page-subtitle">DART 최신 공시 — 최근 5영업일 보관</p>
       </div>
+
+      <PageIntro guides={[{ to: '/guide/dart-disclosure-guide', label: 'DART 공시 읽는 법' }]}>
+        기업 공시는 상장사가 법에 따라 의무적으로 공개하는 1차 자료로, 뉴스보다 앞서는 가장 신뢰도 높은
+        정보입니다. 이 페이지는 금융감독원 DART의 최신 공시를 최근 5영업일간 날짜별로 모아 보여주고,
+        그 이전 공시는 DART 원문으로 연결합니다. 유상증자·전환사채·주요 계약처럼 주가에 직접 영향을 주는
+        공시를 눈여겨보세요.
+      </PageIntro>
 
       <div className="card">
         {/* 검색 + 카운트 + 출처 */}

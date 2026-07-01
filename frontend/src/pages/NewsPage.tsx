@@ -81,19 +81,12 @@ function BriefingArticle({ b }: { b: PolicyBriefing }) {
         <div style={{ color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 600, marginBottom: 4 }}>
           {b.title}
         </div>
-        {b.summary && (
-          <div style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.8rem',
-            lineHeight: 1.6,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}>
-            {b.summary}
-          </div>
-        )}
+        {/*
+         * RSS 원문 발췌(b.summary)는 노출하지 않는다. 정책브리핑 피드의 요약문을
+         * 그대로 재게시하면 Google 게시자 정책상 "copied content without added value"
+         * (scraped content)에 해당하기 때문. 제목·부처·발행일·원문 링크는 출처 표기이며,
+         * 실질 콘텐츠는 아래 Jipyo 자체 큐레이션(editorNote)이 담당한다.
+         */}
       </a>
 
       {b.editorNote && (

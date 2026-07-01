@@ -21,6 +21,17 @@ import type {
   SyncStatus,
   ScreenerRequest,
   ScreenerResult,
+  PostSummary,
+  Post,
+  AdminPost,
+  PostRequest,
+  PostStatus,
+  ReactionType,
+  ReactionResult,
+  GuideSummary,
+  GuideDetail,
+  AdminGuide,
+  GuideRequest,
 } from '../types/api'
 
 /* ── Company ─────────────────────────────── */
@@ -179,4 +190,81 @@ export const getSyncStatus = () =>
 export const screenStocks = (req: ScreenerRequest) =>
   client
     .post<ApiResponse<PageResponse<ScreenerResult>>>('/screener', req)
+    .then((r) => r.data.data)
+
+/* ── Post (게시판) ────────────────────────── */
+
+export const getPosts = (page = 0, size = 20) =>
+  client
+    .get<ApiResponse<PageResponse<PostSummary>>>('/posts', { params: { page, size } })
+    .then((r) => r.data.data)
+
+export const getPost = (id: number, voterId?: string) =>
+  client
+    .get<ApiResponse<Post>>(`/posts/${id}`, { params: { voterId: voterId || undefined } })
+    .then((r) => r.data.data)
+
+export const reactToPost = (id: number, type: ReactionType, voterId: string) =>
+  client
+    .post<ApiResponse<ReactionResult>>(`/posts/${id}/reaction`, { type, voterId })
+    .then((r) => r.data.data)
+
+/* ── Admin: Post ──────────────────────────── */
+
+export const getAdminPosts = (status?: PostStatus, page = 0, size = 20) =>
+  client
+    .get<ApiResponse<PageResponse<AdminPost>>>('/admin/posts', {
+      params: { status: status || undefined, page, size },
+    })
+    .then((r) => r.data.data)
+
+export const createPost = (request: PostRequest) =>
+  client
+    .post<ApiResponse<AdminPost>>('/admin/posts', request)
+    .then((r) => r.data.data)
+
+export const updatePost = (id: number, request: PostRequest) =>
+  client
+    .put<ApiResponse<AdminPost>>(`/admin/posts/${id}`, request)
+    .then((r) => r.data.data)
+
+export const deletePost = (id: number) =>
+  client
+    .delete<ApiResponse<null>>(`/admin/posts/${id}`)
+    .then((r) => r.data.data)
+
+/* ── Guide (투자 가이드) ──────────────────── */
+
+export const getGuides = () =>
+  client
+    .get<ApiResponse<GuideSummary[]>>('/guides')
+    .then((r) => r.data.data)
+
+export const getGuide = (slug: string) =>
+  client
+    .get<ApiResponse<GuideDetail>>(`/guides/${slug}`)
+    .then((r) => r.data.data)
+
+/* ── Admin: Guide ─────────────────────────── */
+
+export const getAdminGuides = (status?: PostStatus, page = 0, size = 20) =>
+  client
+    .get<ApiResponse<PageResponse<AdminGuide>>>('/admin/guides', {
+      params: { status: status || undefined, page, size },
+    })
+    .then((r) => r.data.data)
+
+export const createGuide = (request: GuideRequest) =>
+  client
+    .post<ApiResponse<AdminGuide>>('/admin/guides', request)
+    .then((r) => r.data.data)
+
+export const updateGuide = (id: number, request: GuideRequest) =>
+  client
+    .put<ApiResponse<AdminGuide>>(`/admin/guides/${id}`, request)
+    .then((r) => r.data.data)
+
+export const deleteGuide = (id: number) =>
+  client
+    .delete<ApiResponse<null>>(`/admin/guides/${id}`)
     .then((r) => r.data.data)

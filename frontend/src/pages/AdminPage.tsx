@@ -6,6 +6,8 @@ import { useCurrentUser, useLogout } from '../hooks/useAuth'
 import { useNoIndex } from '../hooks/useNoIndex'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
+import { AdminPostManager } from '../components/AdminPostManager'
+import { AdminGuideManager } from '../components/AdminGuideManager'
 import { ApiError } from '../api/client'
 import type {
   AdminPolicyBriefing,
@@ -256,6 +258,7 @@ export default function AdminPage() {
   const navigate = useNavigate()
   const { data: user } = useCurrentUser()
   const logoutMutation = useLogout()
+  const [tab, setTab] = useState<'briefing' | 'post' | 'guide'>('briefing')
   const [status, setStatus] = useState<EditorialStatus | ''>('COLLECTED')
   const [ministry, setMinistry] = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -290,9 +293,16 @@ export default function AdminPage() {
       </div>
 
       <div className="tab-group" style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="tab active">기사 편집</div>
+        <div className={`tab${tab === 'briefing' ? ' active' : ''}`} onClick={() => setTab('briefing')}>경제 소식 편집</div>
+        <div className={`tab${tab === 'post' ? ' active' : ''}`} onClick={() => setTab('post')}>게시글 작성</div>
+        <div className={`tab${tab === 'guide' ? ' active' : ''}`} onClick={() => setTab('guide')}>투자 가이드</div>
       </div>
 
+      {tab === 'post' && <AdminPostManager />}
+      {tab === 'guide' && <AdminGuideManager />}
+
+      {tab === 'briefing' && (
+      <>
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <form onSubmit={search} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="form-group">
@@ -407,6 +417,8 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      </>
+      )}
     </>
   )
 }

@@ -1,8 +1,9 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer, CartesianGrid,
 } from 'recharts'
+import { buildStockInsights } from '../lib/stockInsights'
 import { useCompanyDetail } from '../hooks/useCompanies'
 import { useLatestPrice } from '../hooks/useStocks'
 import { useMetrics, useFinancialTrend } from '../hooks/useFinancials'
@@ -133,6 +134,9 @@ export default function StockDetailPage() {
   const inWatchlist = useWatchlistStore((s) => (ticker ? s.tickers.includes(ticker) : false))
   const toggleWatchlist = useWatchlistStore((s) => s.toggle)
 
+  // 지표 숫자에 해석·맥락을 더한 자동 요약 (종목 값에 따라 내용이 달라짐)
+  const insights = buildStockInsights(metrics, trend)
+
   const tradingViewUrl = `https://kr.tradingview.com/symbols/KRX-${ticker}/`
   const naverFinanceUrl = `https://finance.naver.com/item/main.naver?code=${ticker}`
 
@@ -220,6 +224,35 @@ export default function StockDetailPage() {
         </div>
       </div>
 
+      {/* 기업 정보 — DART 기업개황 사실 정보 */}
+      {company && (company.ceoName || company.listingDate || company.fiscalMonth || company.homepage) && (
+        <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
+          <div className="card-header">
+            <span className="card-title">기업 정보</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', fontWeight: 'normal' }}>출처: 금융감독원 DART</span>
+          </div>
+          <div className="grid-4" style={{ marginTop: 'var(--space-sm)', fontSize: '0.82rem' }}>
+            {company.ceoName && (
+              <div><div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>대표자</div>{company.ceoName}</div>
+            )}
+            {company.listingDate && (
+              <div><div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>상장일</div>{company.listingDate.slice(0, 10)}</div>
+            )}
+            {company.fiscalMonth && (
+              <div><div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>결산월</div>{company.fiscalMonth}월</div>
+            )}
+            {company.homepage && (
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>홈페이지</div>
+                <a href={company.homepage} target="_blank" rel="noopener noreferrer" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                  {company.homepage.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Financial Trends */}
       {trend && trend.length > 1 && <FinancialTrends trend={trend} />}
 
@@ -255,6 +288,45 @@ export default function StockDetailPage() {
               </div>
             </div>
           ))}
+          </div>
+        </div>
+      )}
+
+      {/* 지표 해석 — 데이터에 맥락을 더한 자동 요약 + 개념 학습 링크 */}
+      {insights.length > 0 && (
+        <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
+          <div className="card-header">
+            <span className="card-title">지표 해석</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto', fontWeight: 'normal' }}>
+              공개 재무 데이터 기반 자동 요약
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-sm)' }}>
+            {insights.map((it) => (
+              <div key={it.key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--accent-orange)', fontWeight: 700, minWidth: 78 }}>
+                    {it.label}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, flex: 1 }}>
+                    {it.text}
+                    {it.guide && (
+                      <>
+                        {' '}
+                        <Link to={it.guide.to} style={{ color: 'var(--accent-orange)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                          {it.guide.label} →
+                        </Link>
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 'var(--space-lg)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-primary)', fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
+            위 요약은 공개된 재무 데이터를 일반적 기준값과 비교해 자동으로 정리한 참고 정보이며, 특정 종목의 매수·매도를 권유하지 않습니다.
+            {' '}지표 개념이 더 궁금하다면{' '}
+            <Link to="/guide" style={{ color: 'var(--text-secondary)' }}>투자 가이드</Link>를 참고하세요.
           </div>
         </div>
       )}

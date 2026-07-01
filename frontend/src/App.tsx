@@ -9,6 +9,10 @@ import ScreenerPage from './pages/ScreenerPage'
 import ComparePage from './pages/ComparePage'
 import MacroPage from './pages/MacroPage'
 import NewsPage from './pages/NewsPage'
+import GuidePage from './pages/GuidePage'
+import GuideArticlePage from './pages/GuideArticlePage'
+import BoardPage from './pages/BoardPage'
+import BoardPostPage from './pages/BoardPostPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
 import LoginPage from './pages/LoginPage'
@@ -36,6 +40,10 @@ export default function App() {
         <Route path="/news" element={<NewsPage />} />
         <Route path="/screener" element={<ScreenerPage />} />
         <Route path="/compare" element={<ComparePage />} />
+        <Route path="/guide" element={<GuidePage />} />
+        <Route path="/guide/:slug" element={<GuideArticlePage />} />
+        <Route path="/board" element={<BoardPage />} />
+        <Route path="/board/:id" element={<BoardPostPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />

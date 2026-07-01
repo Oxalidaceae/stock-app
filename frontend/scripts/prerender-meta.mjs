@@ -2,6 +2,7 @@
 // 가진 dist/<route>/index.html 을 생성한다.
 // SPA 본문은 동일하지만, JS를 실행하지 않는 크롤러(특히 네이버 Yeti)가
 // 경로별로 다른 제목·설명을 읽을 수 있게 해 색인 품질을 높인다.
+// (가이드·게시판·종목 등 DB 기반 동적 경로의 본문은 여기서 다루지 않고 클라이언트에서 렌더링된다.)
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -45,6 +46,16 @@ const ROUTES = [
     path: '/compare',
     title: '종목 비교 — 여러 기업 재무·주가 비교 | Jipyo (지표)',
     description: '관심 있는 여러 종목의 재무제표와 주가를 나란히 비교해 보세요.',
+  },
+  {
+    path: '/guide',
+    title: '투자 가이드 — 지표·공시·거시경제 쉽게 읽기 | Jipyo (지표)',
+    description: 'PER·PBR·ROE 같은 재무지표부터 DART 공시, 기준금리·환율까지. 투자 정보를 스스로 해석하는 데 필요한 기초를 Jipyo가 직접 정리했습니다.',
+  },
+  {
+    path: '/board',
+    title: '게시판 — Jipyo 소식과 이야기 | Jipyo (지표)',
+    description: 'Jipyo 운영진이 전하는 공지, 업데이트 소식과 투자 관련 이야기를 모은 게시판입니다.',
   },
   {
     path: '/about',

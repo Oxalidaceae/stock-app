@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useScreener } from '../hooks/useScreener'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { PageIntro } from '../components/PageIntro'
 import type { ScreenerRequest } from '../types/api'
 
 export default function ScreenerPage() {
@@ -24,6 +25,13 @@ export default function ScreenerPage() {
         <h1 className="page-title">Stock Screener</h1>
         <p className="page-subtitle">재무지표 조건 기반 종목 필터링</p>
       </div>
+
+      <PageIntro guides={[{ to: '/guide/stock-screener-how-to', label: '종목 스크리닝하는 법' }]}>
+        수천 개 상장 종목을 일일이 볼 수는 없으니, 재무 조건으로 후보를 좁히는 것이 스크리닝입니다.
+        이 페이지에서 PER·PBR·ROE·부채비율·시가총액 조건을 조합해 KOSPI·KOSDAQ 종목을 걸러낼 수 있습니다.
+        스크리너는 답이 아니라 ‘들여다볼 대상’을 좁혀주는 도구이니, 추려낸 종목은 상세·공시로 반드시
+        추가 확인하세요.
+      </PageIntro>
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="grid-4" style={{ marginBottom: 'var(--space-lg)' }}>
           <div className="form-group">

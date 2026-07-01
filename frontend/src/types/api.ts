@@ -245,3 +245,105 @@ export interface ScreenerResult {
   revenue: number | null
   netIncome: number | null
 }
+
+/* ── Post (게시판) ───────────────────────────────────── */
+
+export type PostStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+export type ReactionType = 'LIKE' | 'DISLIKE'
+
+/** 게시판 목록 항목. */
+export interface PostSummary {
+  id: number
+  title: string
+  excerpt: string
+  likeCount: number
+  dislikeCount: number
+  authorName: string | null
+  publishedAt: string | null
+}
+
+/** 게시글 상세 (본문 + 조회자 반응 상태). */
+export interface Post {
+  id: number
+  title: string
+  content: string
+  likeCount: number
+  dislikeCount: number
+  authorName: string | null
+  publishedAt: string | null
+  myReaction: ReactionType | null
+}
+
+/** 관리자용 게시글 (상태·타임스탬프 포함). */
+export interface AdminPost {
+  id: number
+  title: string
+  content: string
+  status: PostStatus
+  likeCount: number
+  dislikeCount: number
+  authorName: string | null
+  publishedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PostRequest {
+  title: string
+  content: string
+  status: PostStatus
+}
+
+/** 반응 후 응답 (집계 + 조회자의 현재 반응). */
+export interface ReactionResult {
+  likeCount: number
+  dislikeCount: number
+  myReaction: ReactionType | null
+}
+
+/* ── Guide (투자 가이드) ─────────────────── */
+
+/** 가이드 목록 항목. */
+export interface GuideSummary {
+  slug: string
+  title: string
+  summary: string | null
+  tag: string | null
+  publishedAt: string | null
+}
+
+/** 가이드 상세 (마크다운 본문). */
+export interface GuideDetail {
+  slug: string
+  title: string
+  summary: string | null
+  tag: string | null
+  content: string
+  authorName: string | null
+  publishedAt: string | null
+  updatedAt: string | null
+}
+
+/** 관리자용 가이드 (상태·타임스탬프 포함). */
+export interface AdminGuide {
+  id: number
+  slug: string
+  title: string
+  summary: string | null
+  tag: string | null
+  content: string
+  status: PostStatus
+  authorName: string | null
+  publishedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GuideRequest {
+  slug: string
+  title: string
+  summary: string
+  tag: string
+  content: string
+  status: PostStatus
+}
