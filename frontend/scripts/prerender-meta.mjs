@@ -2,14 +2,10 @@
 // 가진 dist/<route>/index.html 을 생성한다.
 // SPA 본문은 동일하지만, JS를 실행하지 않는 크롤러(특히 네이버 Yeti)가
 // 경로별로 다른 제목·설명을 읽을 수 있게 해 색인 품질을 높인다.
-//
-// 투자 가이드(/guide) 경로는 정적 콘텐츠이므로 <head> 메타뿐 아니라 본문 HTML까지
-// #root 에 미리 채운다. createRoot(하이드레이션 아님)를 쓰므로 클라이언트 부팅 시
-// React 가 이 내용을 교체하며, 그 전까지 크롤러는 실제 텍스트를 읽는다.
+// (가이드·게시판·종목 등 DB 기반 동적 경로의 본문은 여기서 다루지 않고 클라이언트에서 렌더링된다.)
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { guides, GUIDE_UPDATED } from '../src/content/guides.js'
 
 const DIST = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const ORIGIN = 'https://jipyo.net'
@@ -50,6 +46,11 @@ const ROUTES = [
     path: '/compare',
     title: '종목 비교 — 여러 기업 재무·주가 비교 | Jipyo (지표)',
     description: '관심 있는 여러 종목의 재무제표와 주가를 나란히 비교해 보세요.',
+  },
+  {
+    path: '/guide',
+    title: '투자 가이드 — 지표·공시·거시경제 쉽게 읽기 | Jipyo (지표)',
+    description: 'PER·PBR·ROE 같은 재무지표부터 DART 공시, 기준금리·환율까지. 투자 정보를 스스로 해석하는 데 필요한 기초를 Jipyo가 직접 정리했습니다.',
   },
   {
     path: '/board',
@@ -94,56 +95,10 @@ const setCanonical = (html, value) =>
     `$1${escAttr(value)}$2`,
   )
 
-// --- 투자 가이드: 본문 HTML 생성 (크롤러가 실제 텍스트를 읽도록 #root 에 주입) ---
-const blockToHtml = (b) => {
-  switch (b.type) {
-    case 'h2': return `<h2>${escText(b.text)}</h2>`
-    case 'p': return `<p>${escText(b.text)}</p>`
-    case 'note': return `<aside>${escText(b.text)}</aside>`
-    case 'ul': return `<ul>${b.items.map((it) => `<li>${escText(it)}</li>`).join('')}</ul>`
-    default: return ''
-  }
-}
-
-const GUIDE_INTRO = '재무지표·공시·거시경제를 스스로 읽는 데 필요한 기초를 Jipyo가 직접 정리한 해설 모음입니다.'
-
-const guideListBodyHtml = () => {
-  const items = guides.map((g) =>
-    `<li><a href="/guide/${escAttr(g.slug)}"><h2>${escText(g.title)}</h2><p>${escText(g.description)}</p></a></li>`,
-  ).join('')
-  return `<main><h1>투자 가이드</h1><p>${escText(GUIDE_INTRO)}</p><ul>${items}</ul></main>`
-}
-
-const guideArticleBodyHtml = (g) => {
-  const blocks = g.body.map(blockToHtml).join('')
-  const related = g.related.map((r) =>
-    `<li><a href="${escAttr(r.to)}">${escText(r.label)}</a></li>`,
-  ).join('')
-  return `<main><nav><a href="/guide">투자 가이드</a> / ${escText(g.tag)}</nav>` +
-    `<article><h1>${escText(g.title)}</h1><p>${escText(g.description)}</p>` +
-    `<p>업데이트 ${escText(GUIDE_UPDATED)} · Jipyo 편집팀</p>${blocks}` +
-    `<section><h2>이어서 보기</h2><ul>${related}</ul></section></article></main>`
-}
-
-const guideRoutes = [
-  {
-    path: '/guide',
-    title: '투자 가이드 — 지표·공시·거시경제 쉽게 읽기 | Jipyo (지표)',
-    description: 'PER·PBR·ROE 같은 재무지표부터 DART 공시, 기준금리·환율까지. 투자 정보를 스스로 해석하는 데 필요한 기초를 Jipyo가 직접 정리했습니다.',
-    bodyHtml: guideListBodyHtml(),
-  },
-  ...guides.map((g) => ({
-    path: `/guide/${g.slug}`,
-    title: `${g.title} | Jipyo (지표)`,
-    description: g.description,
-    bodyHtml: guideArticleBodyHtml(g),
-  })),
-]
-
 const template = readFileSync(resolve(DIST, 'index.html'), 'utf8')
 
 let count = 0
-for (const r of [...ROUTES, ...guideRoutes]) {
+for (const r of ROUTES) {
   const url = `${ORIGIN}${r.path === '/' ? '/' : r.path}`
   let html = template
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escText(r.title)}</title>`)
@@ -154,11 +109,6 @@ for (const r of [...ROUTES, ...guideRoutes]) {
   html = setAttrMeta(html, 'name', 'twitter:title', r.title)
   html = setAttrMeta(html, 'name', 'twitter:description', r.description)
   html = setCanonical(html, url)
-
-  // 정적 콘텐츠(가이드)는 본문 HTML 을 #root 에 미리 채운다.
-  if (r.bodyHtml) {
-    html = html.replace(/<div id="root">\s*<\/div>/, `<div id="root">${r.bodyHtml}</div>`)
-  }
 
   const outDir = r.path === '/' ? DIST : resolve(DIST, `.${r.path}`)
   mkdirSync(outDir, { recursive: true })
@@ -178,23 +128,6 @@ for (const r of [...ROUTES, ...guideRoutes]) {
     '<meta name="robots" content="noindex, nofollow" />\n    ',
   )
   writeFileSync(resolve(DIST, '404.html'), html)
-}
-
-// 가이드 URL 을 sitemap 에 반영 (guides.js 를 단일 소스로 사용해 수동 누락 방지).
-{
-  const sitemapPath = resolve(DIST, 'sitemap.xml')
-  let xml = readFileSync(sitemapPath, 'utf8')
-  if (!xml.includes('/guide')) {
-    const entries = [
-      { loc: `${ORIGIN}/guide`, changefreq: 'weekly', priority: '0.6' },
-      ...guides.map((g) => ({ loc: `${ORIGIN}/guide/${g.slug}`, changefreq: 'monthly', priority: '0.6' })),
-    ]
-    const block = entries.map((u) =>
-      `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${GUIDE_UPDATED}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`,
-    ).join('\n')
-    xml = xml.replace('</urlset>', `${block}\n</urlset>`)
-    writeFileSync(sitemapPath, xml)
-  }
 }
 
 console.log(`[prerender-meta] ${count}개 경로의 정적 메타 HTML + 404.html 생성 완료`)

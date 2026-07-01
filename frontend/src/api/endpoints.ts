@@ -28,6 +28,10 @@ import type {
   PostStatus,
   ReactionType,
   ReactionResult,
+  GuideSummary,
+  GuideDetail,
+  AdminGuide,
+  GuideRequest,
 } from '../types/api'
 
 /* ── Company ─────────────────────────────── */
@@ -227,4 +231,40 @@ export const updatePost = (id: number, request: PostRequest) =>
 export const deletePost = (id: number) =>
   client
     .delete<ApiResponse<null>>(`/admin/posts/${id}`)
+    .then((r) => r.data.data)
+
+/* ── Guide (투자 가이드) ──────────────────── */
+
+export const getGuides = () =>
+  client
+    .get<ApiResponse<GuideSummary[]>>('/guides')
+    .then((r) => r.data.data)
+
+export const getGuide = (slug: string) =>
+  client
+    .get<ApiResponse<GuideDetail>>(`/guides/${slug}`)
+    .then((r) => r.data.data)
+
+/* ── Admin: Guide ─────────────────────────── */
+
+export const getAdminGuides = (status?: PostStatus, page = 0, size = 20) =>
+  client
+    .get<ApiResponse<PageResponse<AdminGuide>>>('/admin/guides', {
+      params: { status: status || undefined, page, size },
+    })
+    .then((r) => r.data.data)
+
+export const createGuide = (request: GuideRequest) =>
+  client
+    .post<ApiResponse<AdminGuide>>('/admin/guides', request)
+    .then((r) => r.data.data)
+
+export const updateGuide = (id: number, request: GuideRequest) =>
+  client
+    .put<ApiResponse<AdminGuide>>(`/admin/guides/${id}`, request)
+    .then((r) => r.data.data)
+
+export const deleteGuide = (id: number) =>
+  client
+    .delete<ApiResponse<null>>(`/admin/guides/${id}`)
     .then((r) => r.data.data)

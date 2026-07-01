@@ -300,3 +300,50 @@ export interface ReactionResult {
   dislikeCount: number
   myReaction: ReactionType | null
 }
+
+/* ── Guide (투자 가이드) ─────────────────── */
+
+/** 가이드 목록 항목. */
+export interface GuideSummary {
+  slug: string
+  title: string
+  summary: string | null
+  tag: string | null
+  publishedAt: string | null
+}
+
+/** 가이드 상세 (마크다운 본문). */
+export interface GuideDetail {
+  slug: string
+  title: string
+  summary: string | null
+  tag: string | null
+  content: string
+  authorName: string | null
+  publishedAt: string | null
+  updatedAt: string | null
+}
+
+/** 관리자용 가이드 (상태·타임스탬프 포함). */
+export interface AdminGuide {
+  id: number
+  slug: string
+  title: string
+  summary: string | null
+  tag: string | null
+  content: string
+  status: PostStatus
+  authorName: string | null
+  publishedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GuideRequest {
+  slug: string
+  title: string
+  summary: string
+  tag: string
+  content: string
+  status: PostStatus
+}
