@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCompanyDetail } from '../hooks/useCompanies'
 import { useLatestPrice } from '../hooks/useStocks'
 import { useMetrics } from '../hooks/useFinancials'
+import { PageIntro } from '../components/PageIntro'
 import { CompanySearchInput } from '../components/CompanySearchInput'
 
 const MAX_COMPARE = 4
@@ -138,6 +139,15 @@ export default function ComparePage() {
         <h1 className="page-title">Compare Stocks</h1>
         <p className="page-subtitle">최대 {MAX_COMPARE}개 종목의 재무지표를 나란히 비교</p>
       </div>
+
+      <PageIntro guides={[
+        { to: '/guide/per-pbr-valuation', label: 'PER·PBR 읽는 법' },
+        { to: '/guide/roe-roa-profitability', label: 'ROE·ROA 읽는 법' },
+      ]}>
+        한 종목만 보면 그 숫자가 좋은지 나쁜지 판단하기 어렵습니다. 이 페이지는 여러 기업의
+        PER·PBR·ROE·매출 등 재무지표를 나란히 놓고 비교해 상대적 위치를 한눈에 보여줍니다.
+        밸류에이션과 수익성의 차이는 같은 업종끼리 비교할 때 가장 뚜렷하게 드러납니다.
+      </PageIntro>
 
       <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <CompanySearchInput

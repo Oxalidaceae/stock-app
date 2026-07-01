@@ -3,6 +3,7 @@ import { useIndicatorList } from '../hooks/useEconomic'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { WatchlistCard } from '../components/WatchlistCard'
 import { SyncStatusCard } from '../components/SyncStatusCard'
+import { PageIntro } from '../components/PageIntro'
 import { useNavigate } from 'react-router-dom'
 
 export default function DashboardPage() {
@@ -16,6 +17,12 @@ export default function DashboardPage() {
         <h1 className="page-title">Market Overview</h1>
         <p className="page-subtitle">대한민국 주식시장 투자 정보 종합 대시보드</p>
       </div>
+
+      <PageIntro guides={[{ to: '/guide', label: '투자 가이드 보기' }]}>
+        Jipyo(지표)는 한국 상장기업의 주가·재무·공시와 한국은행 거시지표를 한 화면에 모아 정리한
+        투자 정보 서비스입니다. 아래에서 최근 공시와 핵심 경제지표를 훑어보고, 종목 검색이나
+        스크리너로 관심 기업을 더 깊이 살펴볼 수 있습니다. 모든 데이터는 출처와 갱신 기준을 함께 표시합니다.
+      </PageIntro>
 
       {/* Data Sync Status */}
       <SyncStatusCard />

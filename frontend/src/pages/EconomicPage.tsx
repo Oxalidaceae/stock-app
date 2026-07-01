@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useIndicatorList, useIndicatorData } from '../hooks/useEconomic'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { PageIntro } from '../components/PageIntro'
 import { ErrorFallback } from '../components/ErrorFallback'
 
 /**
@@ -123,6 +124,15 @@ export default function EconomicPage() {
         <h1 className="page-title">Economic Indicators</h1>
         <p className="page-subtitle">한국은행 ECOS 주요 경제지표</p>
       </div>
+
+      <PageIntro guides={[
+        { to: '/guide/base-rate-and-stocks', label: '기준금리와 주식' },
+        { to: '/guide/exchange-rate-and-stocks', label: '환율과 주식' },
+      ]}>
+        금리·환율·물가 같은 거시지표는 개별 종목을 넘어 시장 전체의 방향을 좌우합니다. 이 페이지는
+        한국은행 ECOS의 기준금리·소비자물가·원달러 환율·통화량 등 핵심 지표를 최대 10년치 추이와 함께
+        정리합니다. 종목을 보기 전에 지금이 어떤 금리·물가 국면인지 확인하는 출발점으로 활용하세요.
+      </PageIntro>
       <div className="tab-group">
         {indicators?.map(ind => (
           <div key={ind.statCode} className={`tab${activeCode === ind.statCode ? ' active' : ''}`} onClick={() => setSelected(ind.statCode)}>{ind.statName}</div>
