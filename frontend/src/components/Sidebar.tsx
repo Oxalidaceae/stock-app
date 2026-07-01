@@ -9,6 +9,7 @@ const links = [
   { to: '/economic',    icon: '◈', label: '경제지표' },
   { to: '/macro',       icon: '◇', label: '거시지표' },
   { to: '/news',        icon: '◰', label: '경제 소식' },
+  { to: '/guide',       icon: '▤', label: '투자 가이드' },
 ]
 
 interface SidebarProps {
