@@ -18,6 +18,10 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 - **경제 소식** — 정책브리핑 RSS 기반 경제 뉴스 (3시간마다 갱신)
 - **종목 스크리너** — 재무지표·시장·시총 조건 기반 필터링
 - **경제 소식 편집** — 관리자가 RSS 기사를 선별하고 자체 요약을 작성한 뒤 공개
+- **투자 가이드** — 재무지표·공시·거시경제 해설 아티클, 관리자가 마크다운으로 작성·편집
+- **게시판** — 관리자 공지·소식, 로그인 없는 추천/비추천 반응(브라우저별 익명 식별자)
+- **지표 해석** — 종목 상세에서 PER·PBR·ROE 등 실제 값에 따른 자동 해석 + 가이드 연결
+- **동적 sitemap** — 게시된 가이드·게시글을 백엔드가 DB에서 읽어 sitemap.xml 자동 생성
 
 ---
 
@@ -26,7 +30,7 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 | 레이어 | 기술 |
 |---|---|
 | 백엔드 | Spring Boot 3.3, Java 17, Maven, Spring Data JPA, Flyway, Spring Security + JWT(JJWT), WebSocket, Actuator, Lombok |
-| 프론트엔드 | React 19, TypeScript, Vite, React Router 7, TanStack Query, Zustand, Recharts, Axios |
+| 프론트엔드 | React 19, TypeScript, Vite, React Router 7, TanStack Query, Zustand, Recharts, Axios, react-markdown |
 | 데이터 수집 | Python 3.11, FinanceDataReader, SQLAlchemy, pandas, requests, feedparser, schedule |
 | 데이터베이스 | PostgreSQL 16 |
 | 캐시 | Redis 7 (현재 NoOpCacheManager로 비활성) |

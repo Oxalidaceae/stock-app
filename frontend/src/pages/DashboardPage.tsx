@@ -44,6 +44,18 @@ export default function DashboardPage() {
             한국은행 100대 통계지표 — 시장금리·환율·통화량·성장률 한눈에
           </div>
         </div>
+        <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate('/guide')}>
+          <div className="card-title">▤ 투자 가이드</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: 8 }}>
+            PER·PBR부터 공시·금리·환율까지 — 직접 쓴 해설 아티클
+          </div>
+        </div>
+        <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate('/board')}>
+          <div className="card-title">✎ 게시판</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: 8 }}>
+            공지·업데이트 소식 — 로그인 없이 추천/비추천 가능
+          </div>
+        </div>
       </div>
 
       {/* Recent Disclosures */}
