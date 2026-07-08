@@ -65,6 +65,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-https://jipyo.net,https://www.jipyo.net}
+      REACTION_RATE_LIMIT_PER_MINUTE: ${REACTION_RATE_LIMIT_PER_MINUTE:-30}
+      REACTION_IP_SALT: ${REACTION_IP_SALT:-jipyo-reaction}
     depends_on:
       postgres:
         condition: service_healthy
@@ -133,6 +135,31 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  # ── DB 자동 백업 ────────────────────────────────
+  # postgres 이미지의 pg_dump 로 매일 압축 백업 → BACKUP_DIR 로 저장, 오래된 파일 정리.
+  # 스택의 일부라 docker compose up 만 하면 자동 실행(윈도우 작업 스케줄러 불필요).
+  # 오프사이트 보관: .env 에 BACKUP_DIR=<OneDrive/Drive 동기화 폴더> 지정.
+  backup:
+    image: postgres:16-alpine
+    container_name: stockapp-backup
+    restart: unless-stopped
+    mem_limit: 256m
+    entrypoint: ["sh", "/backup-loop.sh"]
+    environment:
+      TZ: Asia/Seoul
+      PGHOST: postgres
+      PGUSER: ${DB_USERNAME:-stockapp}
+      PGPASSWORD: ${DB_PASSWORD:-stockapp}
+      PGDATABASE: ${DB_NAME:-stockapp}
+      BACKUP_HOUR: ${BACKUP_HOUR:-4}          # 매일 이 시각(KST)에 백업
+      KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}      # 보관 일수
+    volumes:
+      - ./scripts/backup-loop.sh:/backup-loop.sh:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+    depends_on:
+      postgres:
         condition: service_healthy
 
   # ── Dozzle (컨테이너 로그 뷰어) ──────────────────

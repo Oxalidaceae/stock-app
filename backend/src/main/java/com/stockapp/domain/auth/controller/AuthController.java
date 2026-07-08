@@ -1,6 +1,7 @@
 package com.stockapp.domain.auth.controller;
 
 import com.stockapp.common.response.ApiResponse;
+import com.stockapp.common.util.ClientIp;
 import com.stockapp.domain.auth.dto.AuthUserResponse;
 import com.stockapp.domain.auth.dto.LoginRequest;
 import com.stockapp.domain.auth.service.AuthService;
@@ -32,7 +33,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthUserResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest servletRequest) {
-        var result = authService.login(request, getClientAddress(servletRequest));
+        var result = authService.login(request, ClientIp.resolve(servletRequest));
         ResponseCookie cookie = ResponseCookie.from(JwtAuthenticationFilter.COOKIE_NAME, result.token())
                 .httpOnly(true)
                 .secure(secureCookie)
@@ -62,17 +63,5 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(ApiResponse.success());
-    }
-
-    private String getClientAddress(HttpServletRequest request) {
-        String cloudflareIp = request.getHeader("CF-Connecting-IP");
-        if (cloudflareIp != null && !cloudflareIp.isBlank()) {
-            return cloudflareIp.trim();
-        }
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

@@ -314,13 +314,38 @@ docker compose up -d --build      # 변경된 이미지만 재빌드 후 교체
 
 ### DB 백업 / 복구
 
-```powershell
-# 백업
-docker compose exec -T postgres pg_dump -U stockapp stockapp > "backup_$(Get-Date -Format yyyy-MM-dd).sql"
+관리자가 직접 쓴 콘텐츠(투자 가이드·게시글·경제소식 요약)는 **DB 볼륨에만** 있으므로
+정기 백업이 필수다. 백업은 **docker-compose 의 `backup` 서비스가 자동 수행**한다
+(별도 스케줄러 등록 불필요).
 
-# 복구
-Get-Content backup_2026-06-15.sql | docker compose exec -T postgres psql -U stockapp stockapp
+**설정** — `.env` 에서 (미지정 시 매일 04시 KST, `./backups`, 14일 보관):
+
+```env
+# 디스크 고장 대비 오프사이트 보관: 클라우드 동기화 폴더로 지정 권장
+BACKUP_DIR=C:/Users/<사용자>/OneDrive/jipyo-backups
+BACKUP_HOUR=4
+BACKUP_KEEP_DAYS=14
 ```
+
+**확인:**
+
+```powershell
+docker compose up -d backup                 # (전체 up -d 시 자동 포함)
+Get-Content .\backups\backup.log -Tail 10   # 백업 이력 (OK/FAIL)
+
+# 즉시 1회 백업 테스트
+docker compose run --rm -e RUN_ON_START=true backup
+```
+
+**복구 (⚠ 기존 데이터 덮어씀):**
+
+```powershell
+docker compose stop backend
+.\scripts\restore-db.ps1 -File .\backups\jipyo_2026-07-06_040000.dump
+docker compose start backend
+```
+
+> 백업은 custom format(`pg_dump -Fc`, 압축) → 복구는 `pg_restore`(restore-db.ps1). 상세: `scripts/README.md`.
 
 `pgdata`는 named volume이라 `docker compose down`으로 컨테이너를 내려도 데이터는 보존된다
 (`docker compose down -v`는 볼륨까지 삭제하므로 주의).

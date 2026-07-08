@@ -24,6 +24,10 @@ collector/venv/
 # Logs (호스트 마운트 영속 로그)
 logs/
 
+# DB 백업 산출물 (로컬 기본 저장 경로)
+/backups/
+scripts/backups/
+
 # OS
 .DS_Store
 

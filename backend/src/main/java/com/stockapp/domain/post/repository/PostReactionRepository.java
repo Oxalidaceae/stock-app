@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface PostReactionRepository extends JpaRepository<PostReaction, Long> {
 
-    Optional<PostReaction> findByPostIdAndVoterId(Long postId, String voterId);
+    Optional<PostReaction> findByPostIdAndVoterIpHash(Long postId, String voterIpHash);
 }

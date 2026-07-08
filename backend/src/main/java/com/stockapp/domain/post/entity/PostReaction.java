@@ -20,7 +20,12 @@ public class PostReaction {
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
-    @Column(name = "voter_id", nullable = false, length = 100)
+    /** 중복 방지 기준: 요청 IP 의 단방향 해시. */
+    @Column(name = "voter_ip_hash", nullable = false, length = 64)
+    private String voterIpHash;
+
+    /** 브라우저 익명 식별자(참고용). dedup 키 아님. */
+    @Column(name = "voter_id", length = 100)
     private String voterId;
 
     @Enumerated(EnumType.STRING)
@@ -33,9 +38,10 @@ public class PostReaction {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static PostReaction of(Long postId, String voterId, ReactionType type) {
+    public static PostReaction of(Long postId, String voterIpHash, String voterId, ReactionType type) {
         PostReaction reaction = new PostReaction();
         reaction.postId = postId;
+        reaction.voterIpHash = voterIpHash;
         reaction.voterId = voterId;
         reaction.type = type;
         LocalDateTime now = LocalDateTime.now();
