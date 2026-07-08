@@ -315,33 +315,37 @@ docker compose up -d --build      # 변경된 이미지만 재빌드 후 교체
 ### DB 백업 / 복구
 
 관리자가 직접 쓴 콘텐츠(투자 가이드·게시글·경제소식 요약)는 **DB 볼륨에만** 있으므로
-정기 백업이 필수다. `scripts/` 에 자동화 스크립트가 있다.
+정기 백업이 필수다. 백업은 **docker-compose 의 `backup` 서비스가 자동 수행**한다
+(별도 스케줄러 등록 불필요).
 
-**자동 백업 등록 (서버에서 1회, 관리자 PowerShell):**
+**설정** — `.env` 에서 (미지정 시 매일 04시 KST, `./backups`, 14일 보관):
 
-```powershell
-# 오프사이트 보관을 위해 BackupDir 를 OneDrive/Google Drive 동기화 폴더로 권장
-powershell -ExecutionPolicy Bypass -File .\scripts\register-backup-task.ps1 `
-  -BackupDir "$env:USERPROFILE\OneDrive\jipyo-backups" -Time 04:30
-
-Start-ScheduledTask -TaskName JipyoDbBackup   # 바로 한 번 테스트
+```env
+# 디스크 고장 대비 오프사이트 보관: 클라우드 동기화 폴더로 지정 권장
+BACKUP_DIR=C:/Users/<사용자>/OneDrive/jipyo-backups
+BACKUP_HOUR=4
+BACKUP_KEEP_DAYS=14
 ```
 
-- 매일 04:30 에 `pg_dump`(압축, custom format) → 지정 폴더로 저장, 14일 초과분 자동 삭제
-- 결과는 `(BackupDir)\backup.log` 에 기록 (성공 `OK` / 실패 `FAIL`)
-- Docker Desktop 이 실행 중일 때만 성공한다
+**확인:**
+
+```powershell
+docker compose up -d backup                 # (전체 up -d 시 자동 포함)
+Get-Content .\backups\backup.log -Tail 10   # 백업 이력 (OK/FAIL)
+
+# 즉시 1회 백업 테스트
+docker compose run --rm -e RUN_ON_START=true backup
+```
 
 **복구 (⚠ 기존 데이터 덮어씀):**
 
 ```powershell
 docker compose stop backend
-.\scripts\restore-db.ps1 -File "$env:USERPROFILE\OneDrive\jipyo-backups\jipyo_2026-07-06_043000.dump"
+.\scripts\restore-db.ps1 -File .\backups\jipyo_2026-07-06_040000.dump
 docker compose start backend
 ```
 
-> 수동 1회 백업만 필요하면: `docker compose exec -T postgres pg_dump -U stockapp -Fc stockapp -f /tmp/b.dump`
-> 후 `docker compose cp postgres:/tmp/b.dump .\b.dump`. (PowerShell 리다이렉션 `>` 은 인코딩
-> 손상 위험이 있어 파일 `-f` 옵션 + `cp` 방식을 쓴다.)
+> 백업은 custom format(`pg_dump -Fc`, 압축) → 복구는 `pg_restore`(restore-db.ps1). 상세: `scripts/README.md`.
 
 `pgdata`는 named volume이라 `docker compose down`으로 컨테이너를 내려도 데이터는 보존된다
 (`docker compose down -v`는 볼륨까지 삭제하므로 주의).

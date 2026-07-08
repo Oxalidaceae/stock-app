@@ -25,6 +25,7 @@ collector/venv/
 logs/
 
 # DB 백업 산출물 (로컬 기본 저장 경로)
+/backups/
 scripts/backups/
 
 # OS

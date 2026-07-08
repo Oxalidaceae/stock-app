@@ -24,7 +24,7 @@
     .\backup-db.ps1 -BackupDir "$env:USERPROFILE\OneDrive\jipyo-backups" -KeepDays 30
 #>
 param(
-    [string]$BackupDir = (Join-Path $PSScriptRoot 'backups'),
+    [string]$BackupDir = (Join-Path (Split-Path -Parent $PSScriptRoot) 'backups'),
     [int]$KeepDays = 14,
     [string]$Container = 'stockapp-postgres',
     [string]$DbUser = 'stockapp',
