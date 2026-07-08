@@ -5,7 +5,6 @@ import com.stockapp.common.exception.ErrorCode;
 import com.stockapp.common.response.PageResponse;
 import com.stockapp.domain.post.dto.PostResponse;
 import com.stockapp.domain.post.dto.PostSummaryResponse;
-import com.stockapp.domain.post.dto.ReactionRequest;
 import com.stockapp.domain.post.dto.ReactionResponse;
 import com.stockapp.domain.post.entity.Post;
 import com.stockapp.domain.post.entity.PostReaction;
@@ -35,28 +34,26 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostResponse getPost(Long id, String voterId) {
+    public PostResponse getPost(Long id, String voterIpHash) {
         Post post = findPublished(id);
-        ReactionType myReaction = null;
-        if (voterId != null && !voterId.isBlank()) {
-            myReaction = reactionRepository.findByPostIdAndVoterId(id, voterId)
-                    .map(PostReaction::getType)
-                    .orElse(null);
-        }
+        ReactionType myReaction = reactionRepository.findByPostIdAndVoterIpHash(id, voterIpHash)
+                .map(PostReaction::getType)
+                .orElse(null);
         return PostResponse.from(post, myReaction);
     }
 
-    /** 따봉/비추 — 같은 반응 재요청은 취소(토글), 다른 반응은 전환. */
+    /**
+     * 따봉/비추 — 같은 반응 재요청은 취소(토글), 다른 반응은 전환.
+     * 중복 방지 기준은 요청 IP 해시(한 IP 당 게시글별 1표) → voterId 위조로 부풀리기 차단.
+     */
     @Transactional
-    public ReactionResponse react(Long id, ReactionRequest request) {
+    public ReactionResponse react(Long id, ReactionType requested, String voterIpHash, String voterId) {
         Post post = findPublished(id);
-        String voterId = request.getVoterId().trim();
-        ReactionType requested = request.getType();
 
-        var existing = reactionRepository.findByPostIdAndVoterId(id, voterId).orElse(null);
+        var existing = reactionRepository.findByPostIdAndVoterIpHash(id, voterIpHash).orElse(null);
         ReactionType myReaction;
         if (existing == null) {
-            reactionRepository.save(PostReaction.of(id, voterId, requested));
+            reactionRepository.save(PostReaction.of(id, voterIpHash, voterId, requested));
             post.adjustCounts(null, requested);
             myReaction = requested;
         } else if (existing.getType() == requested) {
