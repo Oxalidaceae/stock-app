@@ -1,27 +1,31 @@
-import { useEffect } from 'react'
+import { lazy, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import DashboardPage from './pages/DashboardPage'
-import StockDetailPage from './pages/StockDetailPage'
-import DisclosuresPage from './pages/DisclosuresPage'
-import EconomicPage from './pages/EconomicPage'
-import ScreenerPage from './pages/ScreenerPage'
-import ComparePage from './pages/ComparePage'
-import MacroPage from './pages/MacroPage'
-import NewsPage from './pages/NewsPage'
-import GuidePage from './pages/GuidePage'
-import GuideArticlePage from './pages/GuideArticlePage'
-import BoardPage from './pages/BoardPage'
-import BoardPostPage from './pages/BoardPostPage'
-import AboutPage from './pages/AboutPage'
-import ContactPage from './pages/ContactPage'
-import LoginPage from './pages/LoginPage'
-import AdminPage from './pages/AdminPage'
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
-import TermsPage from './pages/TermsPage'
-import NotFoundPage from './pages/NotFoundPage'
 import { RequireAdmin } from './components/RequireAdmin'
 import { useThemeStore } from './stores/themeStore'
+
+// 라우트별 코드 스플리팅 — 첫 로딩은 공통 셸만 받고, 각 페이지 청크(특히 recharts·
+// react-markdown 같은 무거운 의존성)는 해당 라우트 진입 시에만 내려받는다.
+// 로딩 폴백은 Layout 의 <Suspense> 가 담당한다.
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const StockDetailPage = lazy(() => import('./pages/StockDetailPage'))
+const DisclosuresPage = lazy(() => import('./pages/DisclosuresPage'))
+const EconomicPage = lazy(() => import('./pages/EconomicPage'))
+const ScreenerPage = lazy(() => import('./pages/ScreenerPage'))
+const ComparePage = lazy(() => import('./pages/ComparePage'))
+const MacroPage = lazy(() => import('./pages/MacroPage'))
+const NewsPage = lazy(() => import('./pages/NewsPage'))
+const GuidePage = lazy(() => import('./pages/GuidePage'))
+const GuideArticlePage = lazy(() => import('./pages/GuideArticlePage'))
+const BoardPage = lazy(() => import('./pages/BoardPage'))
+const BoardPostPage = lazy(() => import('./pages/BoardPostPage'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
+const ContactPage = lazy(() => import('./pages/ContactPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
+const TermsPage = lazy(() => import('./pages/TermsPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 export default function App() {
   const theme = useThemeStore((s) => s.theme)
