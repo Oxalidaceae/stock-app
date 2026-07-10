@@ -61,9 +61,20 @@ class PostServiceTest {
     }
 
     @Test
+    void reactRejectsUnpublishedPost() {
+        Post draft = Post.create("제목", "내용", PostStatus.DRAFT, null);
+        when(postRepository.findWithLockById(1L)).thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() -> postService.react(1L, ReactionType.LIKE, IP_HASH, "voter"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
     void newReactionIncrementsCountAndSaves() {
         Post post = publishedPost();
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        when(postRepository.findWithLockById(1L)).thenReturn(Optional.of(post));
         when(reactionRepository.findByPostIdAndVoterIpHash(1L, IP_HASH)).thenReturn(Optional.empty());
 
         var response = postService.react(1L, ReactionType.LIKE, IP_HASH, "voter");
@@ -78,7 +89,7 @@ class PostServiceTest {
         Post post = publishedPost();
         post.adjustCounts(null, ReactionType.LIKE);  // 기존 따봉 1 반영
         PostReaction existing = PostReaction.of(1L, IP_HASH, "voter", ReactionType.LIKE);
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        when(postRepository.findWithLockById(1L)).thenReturn(Optional.of(post));
         when(reactionRepository.findByPostIdAndVoterIpHash(1L, IP_HASH)).thenReturn(Optional.of(existing));
 
         var response = postService.react(1L, ReactionType.LIKE, IP_HASH, "voter");
@@ -93,7 +104,7 @@ class PostServiceTest {
         Post post = publishedPost();
         post.adjustCounts(null, ReactionType.LIKE);
         PostReaction existing = PostReaction.of(1L, IP_HASH, "voter", ReactionType.LIKE);
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        when(postRepository.findWithLockById(1L)).thenReturn(Optional.of(post));
         when(reactionRepository.findByPostIdAndVoterIpHash(1L, IP_HASH)).thenReturn(Optional.of(existing));
 
         var response = postService.react(1L, ReactionType.DISLIKE, IP_HASH, "voter");
