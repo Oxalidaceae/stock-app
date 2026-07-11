@@ -3,7 +3,8 @@
 ## 프로젝트 개요
 
 대한민국 상장 기업의 투자 정보를 종합적으로 제공하는 블룸버그 터미널 스타일의 웹 서비스.
-주가, DART 공시/재무제표, 한국은행 경제지표·거시 100대 통계지표, 경제 소식(정책브리핑), 종목 스크리너 기능을 제공한다.
+주가, DART 공시/재무제표, 한국은행 경제지표·거시 100대 통계지표, 경제 소식(정책브리핑),
+종목 스크리너에 더해 관리자가 작성하는 투자 가이드(마크다운)와 게시판(로그인 없는 따봉/비추)을 제공한다.
 
 ---
 
@@ -11,8 +12,8 @@
 
 | 레이어 | 기술 |
 |---|---|
-| 백엔드 | Spring Boot 3.3, Java 21, Maven, Flyway |
-| 프론트엔드 | React 19, TypeScript, Vite, React Router, TanStack Query |
+| 백엔드 | Spring Boot 3.3, Java 17, Maven, Flyway, Spring Security + JWT |
+| 프론트엔드 | React 19, TypeScript, Vite, React Router, TanStack Query, react-markdown |
 | 데이터 수집 | Python 3.11+, FinanceDataReader |
 | 주 DB | PostgreSQL 16 |
 | 캐시 | Redis 7 (현재 `NoOpCacheManager`로 캐싱 비활성) |
@@ -33,11 +34,16 @@ stock_app/
 │       │   ├── financial/    # 재무제표·재무지표
 │       │   ├── economic/     # 경제지표 (ECOS)
 │       │   ├── macro/        # 거시 100대 통계지표
-│       │   ├── briefing/     # 정책브리핑 (경제 소식)
+│       │   ├── briefing/     # 정책브리핑 (경제 소식) + 관리자 편집
 │       │   ├── screener/     # 종목 스크리너
+│       │   ├── guide/        # 투자 가이드 (관리자 작성, 마크다운)
+│       │   ├── post/         # 게시판 + 따봉/비추 (IP 기준 중복방지·레이트리밋)
+│       │   ├── sitemap/      # sitemap.xml 동적 생성
+│       │   ├── auth/ user/   # 자체 로그인(JWT 쿠키) · 사용자
 │       │   └── status/       # 데이터 수집 상태
 │       ├── common/           # 공통 유틸, 예외처리, 응답 포맷
-│       └── config/           # Spring 설정 (Security, Redis, WebSocket 등)
+│       ├── security/         # JWT 필터·토큰·프린시펄
+│       └── config/           # Spring 설정 (Security, 초기 관리자/가이드 시드 등)
 │
 ├── frontend/                 # React SPA
 │   └── src/
@@ -147,7 +153,13 @@ JWT_SECRET=...
 | 거시 100대 통계지표 | ✅ 구현 | collector/ecos + Spring(macro) |
 | 경제 소식 (정책브리핑) | ✅ 구현 | collector/rss + Spring(briefing) |
 | 종목 스크리너 | ✅ 구현 | Spring(screener) + React |
-| 동종업계 비교 | 미구현 | — |
+| 종목 비교 | ✅ 구현 | Spring(financial) + React(ComparePage) |
+| 자체 로그인 (JWT 쿠키) + 관리자 화면 | ✅ 구현 | Spring(auth/user) + React(AdminPage) |
+| 경제 소식 편집 (관리자 큐레이션) | ✅ 구현 | Spring(briefing) + AdminPage |
+| 투자 가이드 (마크다운, 관리자 작성) | ✅ 구현 | Spring(guide) + React(GuidePage 등) |
+| 게시판 + 따봉/비추 (로그인 불필요) | ✅ 구현 | Spring(post) + React(BoardPage 등) |
+| sitemap.xml 동적 생성 | ✅ 구현 | Spring(sitemap) + nginx 프록시 |
+| DB 자동 백업 | ✅ 구현 | docker-compose backup 서비스 |
 | 배당 캘린더 | 미구현 (계획만, SPRING_API_PLAN.md) | — |
 | 포트폴리오 트래킹 | 미구현 (테이블만 정의) | — |
 
@@ -201,7 +213,7 @@ npm run dev
 
 ## DB 스키마
 
-마이그레이션 파일: `backend/src/main/resources/db/migration/` (`V1`~`V6`)
+마이그레이션 파일: `backend/src/main/resources/db/migration/` (`V1`~`V10`)
 Flyway가 Spring Boot 시작 시 자동 실행.
 
 | 테이블 | 설명 |
@@ -214,9 +226,13 @@ Flyway가 Spring Boot 시작 시 자동 실행.
 | `economic_indicators` | 한국은행 ECOS 경제지표 |
 | `macro_keystats` | 거시 100대 통계지표 (매시간 갱신) |
 | `macro_keystat_history` | 100대 통계지표 이력 |
-| `policy_briefing` | 정책브리핑 RSS (경제 소식) |
+| `policy_briefing` | 정책브리핑 RSS (경제 소식) + 관리자 편집 상태(editor_note 등) |
 | `sync_status` | 데이터 수집 상태 추적 |
-| `users` | 회원 (V1에 정의, 로그인 미구현) |
+| `app_users` | 로그인 사용자 (V7, ADMIN/USER — AdminAccountInitializer 가 초기 관리자 시드) |
+| `post` | 게시판 글 (V8, like/dislike 집계 포함) |
+| `post_reaction` | 따봉/비추 (V8·V10 — (post_id, voter_ip_hash) 유니크로 IP당 1표) |
+| `guide` | 투자 가이드 (V9, slug 유니크·마크다운 본문 — GuideDataInitializer 가 초기 8편 시드) |
+| `users` | 회원 (V1에 정의, 미사용 — 실제 로그인은 app_users) |
 | `stock_memos` | 종목별 메모 (V1에 정의, 미사용) |
 | `portfolio_holdings` | 포트폴리오 보유 종목 (V1에 정의, 미사용) |
 | `alert_settings` | 공시/가격 알림 설정 (V1에 정의, 미사용) |
