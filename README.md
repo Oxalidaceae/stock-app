@@ -52,7 +52,9 @@ stock_app/
 │   ├── rss/             # 정책브리핑 RSS (경제 소식)
 │   ├── db/              # DB 연결·세션
 │   └── scripts/         # 진단 스크립트 (probe_*.py)
-└── docker-compose.yml
+├── scripts/             # 운영 스크립트 — DB 자동 백업 루프·수동 백업·복구
+├── docs/                # 배포 가이드(DEPLOY.md)·에이전트 가이드(CLAUDE.md)
+└── docker-compose.yml   # 전체 스택 (backup 서비스가 매일 DB 자동 백업)
 ```
 
 ### 데이터 흐름
