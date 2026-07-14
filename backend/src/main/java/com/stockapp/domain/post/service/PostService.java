@@ -48,7 +48,12 @@ public class PostService {
      */
     @Transactional
     public ReactionResponse react(Long id, ReactionType requested, String voterIpHash, String voterId) {
-        Post post = findPublished(id);
+        // 행 잠금으로 게시글 단위 직렬화 — 동시 반응의 카운트 lost update·중복 INSERT 방지
+        Post post = postRepository.findWithLockById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "게시글을 찾을 수 없습니다"));
+        if (post.getStatus() != PostStatus.PUBLISHED) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "게시글을 찾을 수 없습니다");
+        }
 
         var existing = reactionRepository.findByPostIdAndVoterIpHash(id, voterIpHash).orElse(null);
         ReactionType myReaction;

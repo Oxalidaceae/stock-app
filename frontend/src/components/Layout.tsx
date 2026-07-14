@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { SearchBar } from './SearchBar'
 import { AdUnit } from './AdUnit'
+import { LoadingSpinner } from './LoadingSpinner'
 
 function Footer() {
   return (
@@ -73,7 +74,10 @@ export function Layout() {
         </header>
         <div className="app-body">
           <main className="app-content">
-            <Outlet />
+            {/* 라우트 청크(lazy) 로딩 동안 사이드바·상단바는 유지한 채 본문만 스피너 */}
+            <Suspense fallback={<LoadingSpinner />}>
+              <Outlet />
+            </Suspense>
             <Footer />
           </main>
           <aside className="app-rail" aria-label="광고">
