@@ -60,7 +60,9 @@ services:
       REDIS_PASSWORD: ""
       DART_API_KEY: ${DART_API_KEY}
       ECOS_API_KEY: ${ECOS_API_KEY}
-      JWT_SECRET: ${JWT_SECRET:-default-dev-secret-change-in-production}
+      # :? — .env 에 없으면 기동 자체를 거부. 기본값 fallback 을 두면 저장소에 공개된
+      # 시크릿으로 조용히 떠서 관리자 토큰 위조가 가능해진다.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET 미설정 — .env 에 32자 이상 랜덤값을 넣으세요 (.env.example 참고)}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}

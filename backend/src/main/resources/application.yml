@@ -77,6 +77,8 @@ app:
     api-key: ${ECOS_API_KEY:}
     base-url: https://ecos.bok.or.kr/api
   jwt:
+    # 이 fallback 값은 JwtTokenService 가 기동 시 거부한다(저장소에 공개된 값이므로).
+    # 미설정 시 placeholder 해석 오류 대신 "JWT_SECRET을 설정하라"는 명확한 에러를 내기 위한 것.
     secret: ${JWT_SECRET:default-dev-secret-change-in-production}
     expiration-ms: 86400000  # 24시간
   auth:
