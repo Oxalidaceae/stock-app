@@ -53,7 +53,7 @@ stock_app/
 │   ├── db/              # DB 연결·세션
 │   └── scripts/         # 진단 스크립트 (probe_*.py)
 ├── scripts/             # 운영 스크립트 — DB 자동 백업 루프·수동 백업·복구
-├── docs/                # 배포 가이드(DEPLOY.md)·에이전트 가이드(CLAUDE.md)
+├── docs/                # 배포 가이드(DEPLOY.md)·에이전트 가이드(CLAUDE.md)·개선 과제(IMPROVEMENTS.md)
 └── docker-compose.yml   # 전체 스택 (backup 서비스가 매일 DB 자동 백업)
 ```
 
