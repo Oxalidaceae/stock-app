@@ -3,6 +3,7 @@ package com.stockapp.domain.guide.service;
 import com.stockapp.common.exception.BusinessException;
 import com.stockapp.common.exception.ErrorCode;
 import com.stockapp.common.response.PageResponse;
+import com.stockapp.common.util.Pagination;
 import com.stockapp.domain.guide.dto.AdminGuideResponse;
 import com.stockapp.domain.guide.dto.GuideRequest;
 import com.stockapp.domain.guide.entity.Guide;
@@ -10,7 +11,6 @@ import com.stockapp.domain.guide.entity.GuideStatus;
 import com.stockapp.domain.guide.repository.GuideRepository;
 import com.stockapp.domain.user.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +23,7 @@ public class AdminGuideService {
 
     @Transactional(readOnly = true)
     public PageResponse<AdminGuideResponse> getGuides(GuideStatus status, int page, int size) {
-        int safeSize = Math.min(Math.max(size, 1), 100);
-        var pageable = PageRequest.of(Math.max(page, 0), safeSize);
+        var pageable = Pagination.adminPage(page, size);
         var result = (status == null
                 ? guideRepository.findAllByOrderByUpdatedAtDesc(pageable)
                 : guideRepository.findByStatusOrderByUpdatedAtDesc(status, pageable))

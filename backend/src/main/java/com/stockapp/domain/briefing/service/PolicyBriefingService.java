@@ -1,12 +1,12 @@
 package com.stockapp.domain.briefing.service;
 
 import com.stockapp.common.response.PageResponse;
+import com.stockapp.common.util.Pagination;
 import com.stockapp.domain.briefing.dto.BriefingDateResponse;
 import com.stockapp.domain.briefing.dto.PolicyBriefingResponse;
 import com.stockapp.domain.briefing.entity.EditorialStatus;
 import com.stockapp.domain.briefing.repository.PolicyBriefingRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +41,7 @@ public class PolicyBriefingService {
     public PageResponse<PolicyBriefingResponse> getBriefings(
             String ministry, LocalDate date, boolean curatedOnly, int page, int size) {
         var statuses = curatedOnly ? CURATED_STATUSES : PUBLIC_STATUSES;
-        var pageable = PageRequest.of(page, size);
+        var pageable = Pagination.publicPage(page, size);
         var result = (date == null)
                 ? repository.findPublic(statuses, ministry, pageable)
                 : repository.findPublicByDateRange(statuses, ministry,

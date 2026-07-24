@@ -3,6 +3,7 @@ package com.stockapp.domain.post.service;
 import com.stockapp.common.exception.BusinessException;
 import com.stockapp.common.exception.ErrorCode;
 import com.stockapp.common.response.PageResponse;
+import com.stockapp.common.util.Pagination;
 import com.stockapp.domain.post.dto.PostResponse;
 import com.stockapp.domain.post.dto.PostSummaryResponse;
 import com.stockapp.domain.post.dto.ReactionResponse;
@@ -13,7 +14,6 @@ import com.stockapp.domain.post.entity.ReactionType;
 import com.stockapp.domain.post.repository.PostReactionRepository;
 import com.stockapp.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +26,8 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PageResponse<PostSummaryResponse> getPosts(int page, int size) {
-        int safeSize = Math.min(Math.max(size, 1), 50);
         var result = postRepository
-                .findByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED, PageRequest.of(Math.max(page, 0), safeSize))
+                .findByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED, Pagination.publicPage(page, size))
                 .map(PostSummaryResponse::from);
         return PageResponse.from(result);
     }

@@ -3,6 +3,7 @@ package com.stockapp.domain.post.service;
 import com.stockapp.common.exception.BusinessException;
 import com.stockapp.common.exception.ErrorCode;
 import com.stockapp.common.response.PageResponse;
+import com.stockapp.common.util.Pagination;
 import com.stockapp.domain.post.dto.AdminPostResponse;
 import com.stockapp.domain.post.dto.PostRequest;
 import com.stockapp.domain.post.entity.Post;
@@ -10,7 +11,6 @@ import com.stockapp.domain.post.entity.PostStatus;
 import com.stockapp.domain.post.repository.PostRepository;
 import com.stockapp.domain.user.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +23,7 @@ public class AdminPostService {
 
     @Transactional(readOnly = true)
     public PageResponse<AdminPostResponse> getPosts(PostStatus status, int page, int size) {
-        int safeSize = Math.min(Math.max(size, 1), 100);
-        var pageable = PageRequest.of(Math.max(page, 0), safeSize);
+        var pageable = Pagination.adminPage(page, size);
         var result = (status == null
                 ? postRepository.findAllByOrderByUpdatedAtDesc(pageable)
                 : postRepository.findByStatusOrderByUpdatedAtDesc(status, pageable))

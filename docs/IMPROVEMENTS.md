@@ -11,8 +11,13 @@
 
 ### 🔴 공개 API에 페이징 상한이 없음 — 홈서버 다운 벡터
 
-- [ ] **위치**: `backend/.../disclosure/controller/DisclosureController.java:21-31`,
-  `backend/.../screener/dto/ScreenerRequest.java`
+- [x] **해결** (`common/util/Pagination.java` 신설) — page/size 정규화 헬퍼로 통일.
+  공개 API는 `publicPage()`(size ≤ 50), 관리자 API는 `adminPage()`(size ≤ 100).
+  `DisclosureService`·`PolicyBriefingService`·`ScreenerService`·`PostService`(공개) +
+  `AdminGuideService`·`AdminPostService`·`AdminBriefingService`(관리자) 전부 적용.
+  기존에 서비스마다 흩어져 있던 인라인 클램프(`Math.min(Math.max(...))`)도 이 헬퍼로 흡수.
+- [ ] ~~**위치**: `backend/.../disclosure/controller/DisclosureController.java:21-31`,
+  `backend/.../screener/dto/ScreenerRequest.java`~~
 
 `page`/`size`를 검증 없이 `PageRequest.of()`에 그대로 넘긴다.
 
@@ -47,7 +52,9 @@ spring:
 
 ### 🔴 스크리너 `sortBy` 미검증 → 500
 
-- [ ] **위치**: `backend/.../screener/service/ScreenerService.java:29-31`
+- [x] **해결** (`ScreenerService.java`) — `FinancialMetric` 실제 프로퍼티명으로 구성한
+  `SORTABLE` 화이트리스트를 추가. 목록 밖 값이 오면 기본값 `per`로 폴백해 500 대신 정상 응답.
+- [ ] ~~**위치**: `backend/.../screener/service/ScreenerService.java:29-31`~~
 
 `request.getSortBy()`를 `Sort.by()`에 바로 넣는다. 존재하지 않는 프로퍼티명이 오면
 `PropertyReferenceException` → 500. (SQL 인젝션은 아님 — JPA가 프로퍼티명을 검증한다.)
@@ -63,38 +70,30 @@ String sortBy = SORTABLE.contains(request.getSortBy()) ? request.getSortBy() : "
 
 ### 🟡 `@Valid` / Bean Validation 미사용
 
-- [ ] **위치**: `backend/.../screener/controller/ScreenerController.java`
-
-`spring-boot-starter-validation`이 pom에 있고 `GlobalExceptionHandler`에
-`MethodArgumentNotValidException` 핸들러까지 준비돼 있는데, `@RequestBody`에 `@Valid`가
-없어 트리거될 일이 없다. DTO에 `@Min`/`@Max` 제약을 붙이면 위의 페이징 문제도 함께 해결된다.
+- [x] **해결** — `ScreenerController.screen()`의 `@RequestBody`에 `@Valid` 부착.
+  `ScreenerRequest`의 `page`에 `@Min(0)`, `size`에 `@Min(1) @Max(50)` 추가.
+  잘못된 값은 이제 `MethodArgumentNotValidException` → 400(필드별 메시지)으로 응답한다.
+  (서비스단 `Pagination` 클램프는 그대로 남겨 방어 심층화.)
 
 ---
 
 ### 🟡 `GlobalExceptionHandler`에 400 계열 핸들러 부족
 
-- [ ] **위치**: `backend/.../common/exception/GlobalExceptionHandler.java`
-
-다음 예외가 전부 catch-all(`Exception.class`)로 떨어져 **클라이언트 잘못이 500으로 기록**된다.
-로그가 에러로 오염되어 실제 장애 탐지가 어려워진다.
-
-- `MethodArgumentTypeMismatchException` — 타입 안 맞는 쿼리 파라미터
-- `HttpMessageNotReadableException` — 깨진 JSON 본문
-- `IllegalArgumentException` — `PageRequest.of()` 등에서 발생
+- [x] **해결** (`GlobalExceptionHandler.java`) — 아래 3종 핸들러 추가. 모두 400 + `log.warn`
+  으로 처리해 catch-all(500 + `log.error`) 오염을 막는다.
+  - `MethodArgumentTypeMismatchException` — 타입 안 맞는 쿼리 파라미터
+  - `HttpMessageNotReadableException` — 깨진 JSON 본문
+  - `IllegalArgumentException` — `PageRequest.of()` 등에서 발생
 
 ---
 
 ### 🟡 `REACTION_IP_SALT` 기본값이 저장소에 공개
 
-- [ ] **위치**: `docker-compose.yml` (backend 서비스 environment)
-
-```yaml
-REACTION_IP_SALT: ${REACTION_IP_SALT:-jipyo-reaction}   # ← fallback 존재
-```
-
-`JWT_SECRET`은 `:?`로 기동 거부까지 걸어뒀는데 salt는 fallback이 남아 있다.
-IPv4 주소 공간(43억)은 전수 계산이 가능하므로, salt가 공개되면 저장된 해시에서
-원본 IP를 역산할 수 있다. `JWT_SECRET`과 동일하게 `:?` 처리를 권한다.
+- [x] **해결** (`docker-compose.yml`) — `${REACTION_IP_SALT:-jipyo-reaction}` →
+  `${REACTION_IP_SALT:?...}`로 변경. `JWT_SECRET`과 동일하게 미설정 시 컨테이너 기동 거부.
+  IPv4 전수 계산으로 해시에서 원본 IP를 역산하는 것을 차단한다.
+  (로컬 개발은 `application.yml`/`PostController`의 fallback으로 계속 기동 가능 —
+  `AUTH_COOKIE_SECURE=false`와 동일한 로컬 예외.)
 
 ---
 

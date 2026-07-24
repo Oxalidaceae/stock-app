@@ -68,7 +68,9 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-https://jipyo.net,https://www.jipyo.net}
       REACTION_RATE_LIMIT_PER_MINUTE: ${REACTION_RATE_LIMIT_PER_MINUTE:-30}
-      REACTION_IP_SALT: ${REACTION_IP_SALT:-jipyo-reaction}
+      # :? — JWT_SECRET 과 동일. 미설정 시 기동 거부. 공개된 기본 salt 로 조용히 뜨면
+      # 저장된 IP 해시에서 원본 IP 를 역산할 수 있다(IPv4 전수 계산 가능).
+      REACTION_IP_SALT: ${REACTION_IP_SALT:?REACTION_IP_SALT 미설정 — .env 에 임의 랜덤값을 넣으세요 (.env.example 참고)}
     depends_on:
       postgres:
         condition: service_healthy
