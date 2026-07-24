@@ -1,8 +1,11 @@
 package com.stockapp.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.ShallowEtagHeaderFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
@@ -14,6 +17,12 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${app.cors.allowed-origins}")
     private String[] allowedOrigins;
 
+    private final CacheControlInterceptor cacheControlInterceptor;
+
+    public WebConfig(CacheControlInterceptor cacheControlInterceptor) {
+        this.cacheControlInterceptor = cacheControlInterceptor;
+    }
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
@@ -22,6 +31,21 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600);
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(cacheControlInterceptor).addPathPatterns("/api/**");
+    }
+
+    /**
+     * 응답 본문 해시로 ETag 를 붙이고, {@code If-None-Match} 가 일치하면 304(빈 본문)로 응답한다.
+     * 대시보드·소식 등 폴링성 조회에서 본문 미변경 시 전송 바이트를 없앤다.
+     * (2xx GET 에만 ETag 를 부여하므로 에러 응답은 영향받지 않는다.)
+     */
+    @Bean
+    public ShallowEtagHeaderFilter shallowEtagHeaderFilter() {
+        return new ShallowEtagHeaderFilter();
     }
 
     /**

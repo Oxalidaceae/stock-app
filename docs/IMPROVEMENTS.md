@@ -154,48 +154,32 @@ IFRS 계정 ID Set이 양쪽에 중복 정의되어 **주석으로만 동기화*
 
 ### 🟡 HTTP 캐시 헤더가 sitemap에만 있음
 
-- [ ] **위치**: 각 도메인 컨트롤러 (`SitemapController`만 `CacheControl` 적용됨)
-
-주가는 15~20분 지연, 경제지표는 시간 단위, 가이드는 사실상 정적이다.
-`Cache-Control: public, max-age=…` + `ETag`만 붙여도 Cloudflare 엣지가 대부분 흡수한다.
-**애플리케이션 캐싱이 없는 현 구조에서 가장 저렴한 개선.**
+- [x] **해결** — `config/CacheControlInterceptor` 신설 + `WebConfig` 등록.
+  공개 GET API 에 경로별 `Cache-Control: public` 부여(느린 데이터 10분 / 자주 갱신 60초).
+  `ShallowEtagHeaderFilter` 로 `ETag`+조건부 304 도 추가. **캐시에서 제외**: `/api/admin`,
+  `/api/auth`, `/api/posts`(요청 IP 기준 `myReaction` 포함 — 공유 캐시 노출 방지),
+  `/api/sitemap.xml`(자체 헤더 유지).
 
 ### 🟡 nginx에 gzip·정적 캐시·보안 헤더 전무
 
-- [ ] **위치**: `frontend/nginx.conf`
-
-```nginx
-gzip on;
-gzip_types text/css application/javascript application/json image/svg+xml;
-gzip_min_length 1024;
-
-# Vite 해시 파일명이라 immutable 이 안전
-location ~* \.(js|css|svg|woff2)$ {
-    add_header Cache-Control "public, max-age=31536000, immutable";
-}
-
-add_header X-Content-Type-Options "nosniff" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-```
-
-Cloudflare가 gzip을 대신 해주긴 하지만 origin↔edge 구간은 여전히 비압축이다.
+- [x] **해결** (`frontend/nginx.conf`) —
+  - `gzip on` + 텍스트 계열 `gzip_types` (origin↔edge 구간 압축)
+  - `location ^~ /assets/` 에 1년 `immutable` 캐시 (Vite 해시 산출물 전용 —
+    루트의 비해시 `favicon.svg` 등은 제외해 교체 시 반영되게 유지)
+  - `X-Content-Type-Options: nosniff` + `Referrer-Policy` 서버 레벨 부여.
+    nginx `add_header` 상속 규칙상 자체 헤더가 있는 하위 location(`/login`·`/admin`·
+    `/404.html`·`/assets/`)에는 재선언해 누락을 막음.
 
 ### 🟡 검색 LIKE `%q%` — 인덱스 미사용
 
-- [ ] **위치**: `CompanyRepository.search()` (`:15-21`),
-      `DisclosureRepository.findAllRecent()` (`:22-30`)
+- [x] **해결** — `V11__search_trgm_indexes.sql` 추가. `pg_trgm` GIN 인덱스로 부분 문자열
+  LIKE 를 인덱스 처리. 쿼리가 `LOWER(col) LIKE ...` 이므로 플래너가 확실히 타도록
+  `lower(col)` **표현식 인덱스**로 생성:
+  - `companies` — `lower(company_name)`, `lower(ticker)` (검색 OR 양쪽 다 인덱싱해야 풀스캔 회피)
+  - `disclosures` — `lower(report_name)` (누적 테이블이라 이득 최대)
 
-선행 와일드카드라 항상 풀스캔. 기업 ~2,800건은 괜찮지만
-**공시는 누적되므로 시간이 갈수록 느려진다.**
-
-```sql
--- 신규 Flyway 마이그레이션 (V11__)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_disclosures_report_name_trgm
-    ON disclosures USING gin (report_name gin_trgm_ops);
-CREATE INDEX idx_companies_name_trgm
-    ON companies USING gin (company_name gin_trgm_ops);
-```
+  > 주의: `CONCURRENTLY` 는 Flyway 트랜잭션 안에서 못 쓰므로 일반 `CREATE INDEX` 사용
+  > (기동 시 짧은 락). `pg_trgm` 은 PG13+ trusted extension 이라 DB 소유자가 설치 가능.
 
 ---
 
