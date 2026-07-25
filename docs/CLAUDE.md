@@ -16,7 +16,7 @@
 | 프론트엔드 | React 19, TypeScript, Vite, React Router, TanStack Query, react-markdown |
 | 데이터 수집 | Python 3.11+, FinanceDataReader |
 | 주 DB | PostgreSQL 16 |
-| 캐시 | Redis 7 (현재 `NoOpCacheManager`로 캐싱 비활성) |
+| 캐시 | 애플리케이션 캐시 없음 — `spring.cache.type=none`(`NoOpCacheManager`). Redis 제거됨. HTTP `Cache-Control`/`ETag` + Cloudflare 엣지로 흡수 |
 
 ---
 
@@ -89,7 +89,7 @@ stock_app/
 - **경제지표**: ECOS API → PostgreSQL → Spring API 응답
 - **경제 소식**: 정책브리핑 RSS → PostgreSQL → Spring API 응답
 
-> Redis 의존성·설정은 있으나 현재 `NoOpCacheManager`라 캐싱은 비활성. 모든 조회는 PostgreSQL 직접 조회.
+> Redis 는 제거됨(직렬화 이슈로 비활성 상태였고 메모리만 점유). 캐싱은 `NoOpCacheManager`로 무동작이라 모든 조회는 PostgreSQL 직접 조회. 조회 캐시는 HTTP `Cache-Control`/`ETag`(`CacheControlInterceptor`) + Cloudflare 엣지가 흡수한다.
 
 ---
 
@@ -134,8 +134,8 @@ DB_NAME=stockapp
 DB_USERNAME=stockapp
 DB_PASSWORD=stockapp
 JWT_SECRET=...
-# docker 내부: DB_HOST=postgres / REDIS_HOST=redis
-# 로컬 개발(컨테이너 밖): DB_HOST=localhost / REDIS_HOST=localhost
+# docker 내부: DB_HOST=postgres
+# 로컬 개발(컨테이너 밖): DB_HOST=localhost
 ```
 
 `backend/src/main/resources/application.yml` — Spring도 동일 환경변수를 사용.
@@ -171,7 +171,7 @@ JWT_SECRET=...
 - 패키지 구조: `com.stockapp.domain.{도메인}.{layer}` (예: `com.stockapp.domain.stock.service`)
 - API 응답은 `ApiResponse<T>` 공통 래퍼 사용
 - 예외는 `GlobalExceptionHandler`에서 일괄 처리
-- 캐싱은 현재 비활성(`NoOpCacheManager`) — 서비스는 PostgreSQL을 직접 조회. `@Cacheable`은 향후 Redis 캐시 매니저 교체 시 동작
+- 캐싱은 무동작(`spring.cache.type=none` → `NoOpCacheManager`) — 서비스는 PostgreSQL을 직접 조회. `@Cacheable`/`@EnableCaching`은 남겨 뒀고, 향후 caffeine 등으로 `type`만 교체하면 동작. Redis 는 제거됨
 
 ### Frontend (TypeScript)
 - 서버 상태: React Query (`@tanstack/react-query`)
@@ -189,9 +189,8 @@ JWT_SECRET=...
 ## 로컬 개발 환경 설정
 
 ```bash
-# PostgreSQL & Redis (Docker)
+# PostgreSQL (Docker)
 docker run -d --name postgres -e POSTGRES_DB=stockapp -e POSTGRES_USER=stockapp -e POSTGRES_PASSWORD=stockapp -p 5432:5432 postgres:16
-docker run -d --name redis -p 6379:6379 redis:7
 
 # Python collector
 cd collector

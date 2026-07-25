@@ -101,17 +101,18 @@ String sortBy = SORTABLE.contains(request.getSortBy()) ? request.getSortBy() : "
 
 ### 테스트가 도메인 3개에만 존재
 
-- [ ] 백엔드: 9개 클래스 / 36개 `@Test` — guide·post·auth·jwt·webconfig만.
-      **컨트롤러·레포지토리·통합 테스트 0개**
+- [~] 백엔드: 36 → **53개 `@Test`** 로 보강. 최근 수정/추가한 코드 우선 커버:
+  - `PaginationTest` (6) — 페이징 클램프(보안 수정 회귀 방지)
+  - `CacheControlInterceptorTest` (7) — 캐시 헤더 경로 규칙·제외 로직
+  - `ScreenerServiceTest` (4) — `sortBy` 화이트리스트 폴백 + 페이징 클램프
+- [ ] 아직 남음: **컨트롤러·레포지토리·통합 테스트 0개** (context-load 스모크 포함 —
+      Testcontainers 필요). 아래 고위험 로직도 미검증:
+  - `screener/spec/FinancialMetricSpec.java` — 필터 조합 로직
+  - `financial/service/FinancialService.java:88-128` — `Bucket`의 당기/전기 병합 집계.
+    테스트 없이 손대기 특히 위험한 코드
+  - `collector/market/market_pipeline.py` (360줄) — 재무지표 계산
 - [ ] 프론트엔드: 테스트 프레임워크 자체가 없음 (vitest 미설치)
 - [ ] 컬렉터: 테스트 0개
-
-회귀가 가장 잦을 곳이 전부 미검증이다:
-
-- `screener/spec/FinancialMetricSpec.java` — 필터 조합 로직
-- `financial/service/FinancialService.java:88-128` — `Bucket`의 당기/전기 병합 집계.
-  테스트 없이 손대기 특히 위험한 코드
-- `collector/market/market_pipeline.py` (360줄) — 재무지표 계산
 
 ### CI 없음
 
@@ -136,21 +137,18 @@ IFRS 계정 ID Set이 양쪽에 중복 정의되어 **주석으로만 동기화*
 
 ### 🔴 캐싱이 전면 비활성 — 모든 조회가 PostgreSQL 직타
 
-- [ ] **위치**: `backend/.../config/RedisConfig.java`
+- [x] **해결(제거 방향)** — Redis 를 스택에서 완전 제거. `NoOpCacheManager`로 무동작이면서
+  384MB만 점유하던 순손해를 걷어냈다. 조회 캐시는 앞서 넣은 HTTP `Cache-Control`/`ETag`
+  + Cloudflare 엣지가 대신 흡수한다.
+  - `docker-compose.yml` — redis 서비스 + backend/collector 의 `REDIS_*` env + `depends_on` 제거
+  - `pom.xml` — `spring-boot-starter-data-redis` 제거
+  - `RedisConfig.java` 삭제 — `spring.cache.type=none` 이 Spring Boot 기본 `NoOpCacheManager`
+    를 제공하므로 `@Cacheable`/`@EnableCaching` 은 그대로 무해하게 동작(5개 서비스 무수정)
+  - `application.yml` — `spring.data.redis` + `management.health.redis` 제거
+  - `collector/config.py`·`requirements.txt` — 미사용 `REDIS_*` 설정·`redis` 패키지 제거
 
-`NoOpCacheManager`라 `@Cacheable`이 전부 무동작이다. 그런데 **Redis 컨테이너는 384MB를
-점유하며 돌고 있고**, actuator health까지 붙어 있다. RAM이 빠듯한 서버에서 순수 손해.
-
-기존 주석의 원인("GenericJackson2JsonRedisSerializer 폴리모픽 직렬화 이슈") 해법:
-
-- `GenericJackson2JsonRedisSerializer` 대신 **DTO별 `Jackson2JsonRedisSerializer`** 사용, 또는
-- `ObjectMapper`에 `JavaTimeModule` 등록 +
-  `activateDefaultTyping(LaissezFaireSubTypeValidator.instance, NON_FINAL)`
-
-하루 1회 갱신되는 데이터(재무지표·경제지표·100대지표)라 캐시 히트율이 극단적으로 높을 영역이다.
-
-> 캐시를 켤 계획이 없다면 최소한 redis 컨테이너와 `management.health.redis`를 내려
-> 384MB를 회수할 것. 어느 쪽이든 **지금 상태가 최악**이다.
+  > 나중에 실제 캐시가 필요하면 `spring.cache.type` 을 caffeine 등으로 바꾸면 된다
+  > (컨테이너 추가 없이 인프로세스 캐시).
 
 ### 🟡 HTTP 캐시 헤더가 sitemap에만 있음
 

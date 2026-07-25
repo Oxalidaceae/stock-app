@@ -1,7 +1,7 @@
 # 배포 가이드 (윈도우 홈서버 + Docker Desktop + Cloudflare Tunnel)
 
 집에 있는 **윈도우 노트북 1대**를 홈서버로 두고, **Docker Desktop**으로 전체 스택
-(PostgreSQL · Redis · Spring Boot · React/nginx · Python Collector)을 올린 뒤,
+(PostgreSQL · Spring Boot · React/nginx · Python Collector)을 올린 뒤,
 **Cloudflare Tunnel**로 외부에 공개하는 방식이다.
 
 > 이 방식의 핵심: **포트포워딩 · 공인 IP · 직접 TLS 인증서 발급이 전부 불필요**하다.
@@ -39,7 +39,7 @@
  │   │  │ [backend :8080]                 │  │  │
  │   │  │     │         │                 │  │  │
  │   │  │     ▼         ▼                 │  │  │
- │   │  │ [postgres]  [redis] ← 내부망 전용│  │  │
+ │   │  │ [postgres] ← 내부망 전용          │  │  │
  │   │  │ [collector-daemon] 자동 수집     │  │  │
  │   │  │ [dozzle 127.0.0.1:8081] 로그뷰어 │  │  │
  │   │  └─────────────────────────────────┘  │  │
@@ -50,7 +50,7 @@
 - **외부에 여는 포트: 없음.** cloudflared가 Cloudflare로 아웃바운드 연결만 맺는다.
 - TLS는 Cloudflare가 종단·발급·갱신을 모두 처리한다 (Caddy/Let's Encrypt 불필요).
 - 터널 라우팅(어느 도메인 → `localhost:3000`)은 **Cloudflare 대시보드에서 관리**한다(노트북에 config 파일 없음 = remotely-managed tunnel).
-- PostgreSQL·Redis·Dozzle은 외부는 물론 LAN에도 노출하지 않는다.
+- PostgreSQL·Dozzle은 외부는 물론 LAN에도 노출하지 않는다.
 
 ---
 
@@ -207,7 +207,7 @@ Get-Service cloudflared | Select-Object Name, Status, StartType
 
 Cloudflare Tunnel은 아웃바운드 연결만 쓰므로 **공유기 포트포워딩도, 윈도우 인바운드 방화벽 규칙도 필요 없다.**
 
-- DB(5432)·Redis(6379)는 compose에서 호스트에 노출하지 않으므로 외부/LAN 어디서도 접근 불가.
+- DB(5432)는 compose에서 호스트에 노출하지 않으므로 외부/LAN 어디서도 접근 불가.
 - backend(8080)는 frontend 컨테이너가 내부망으로 호출하므로 외부 개방 불필요.
 
 ### LAN 노출 차단
@@ -404,7 +404,7 @@ wsl --shutdown        # (Docker Desktop 완전 종료 후) — 이후 Docker Des
 
 `memory=` 하드 캡 덕에 VM이 아무리 새도 호스트가 99%에 닿지 못하고, `autoMemoryReclaim`이 평상시 사용량을 그보다 낮게 유지한다.
 
-**② 컨테이너별 메모리 상한 + JVM 힙 캡 (이미 적용됨).** VM 안에서 한 컨테이너가 폭주해 형제를 OOM시키는 걸 막는 방어선. `docker-compose.yml`의 각 서비스 `mem_limit`(postgres 2g · redis 384m · backend 2g · frontend 128m · collector-daemon 1.5g · dozzle 128m)과 `backend/Dockerfile`의 `-Xmx1280m`(힙 명시 캡 — WSL2 cgroup v2에서 JVM 자동 감지가 VM 전체 RAM을 읽는 문제 회피)이 함께 동작한다. 한 컨테이너가 폭주하면 자기 한도에서 OOM 재시작되어 로그에 남으므로 **진범이 자동 특정**된다.
+**② 컨테이너별 메모리 상한 + JVM 힙 캡 (이미 적용됨).** VM 안에서 한 컨테이너가 폭주해 형제를 OOM시키는 걸 막는 방어선. `docker-compose.yml`의 각 서비스 `mem_limit`(postgres 2g · backend 2g · frontend 128m · collector-daemon 1.5g · dozzle 128m)과 `backend/Dockerfile`의 `-Xmx1280m`(힙 명시 캡 — WSL2 cgroup v2에서 JVM 자동 감지가 VM 전체 RAM을 읽는 문제 회피)이 함께 동작한다. 한 컨테이너가 폭주하면 자기 한도에서 OOM 재시작되어 로그에 남으므로 **진범이 자동 특정**된다.
 
 > ①(`.wslconfig`)을 먼저 적용하는 것을 권장. 그래도 특정 컨테이너가 계속 한도에 부딪히면 그 컨테이너의 누수를 추적한다.
 

@@ -33,7 +33,7 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 | 프론트엔드 | React 19, TypeScript, Vite, React Router 7, TanStack Query, Zustand, Recharts, Axios, react-markdown |
 | 데이터 수집 | Python 3.11, FinanceDataReader, SQLAlchemy, pandas, requests, feedparser, schedule |
 | 데이터베이스 | PostgreSQL 16 |
-| 캐시 | Redis 7 (현재 NoOpCacheManager로 비활성) |
+| 캐시 | 애플리케이션 캐시 없음(`NoOpCacheManager`) — HTTP `Cache-Control`/`ETag` + Cloudflare 엣지로 흡수 |
 | 인프라 | Docker Compose, nginx(프론트 서빙·API 프록시), Cloudflare Tunnel(외부 공개), Dozzle(로그 뷰어) |
 
 ---
@@ -106,8 +106,8 @@ AUTH_COOKIE_SECURE=false
 docker-compose up -d
 ```
 
-→ 6개 컨테이너 기동:
-- `postgres`, `redis`, `backend`, `frontend`, **`collector-daemon`** (자동 갱신), `dozzle` (로그 뷰어)
+→ 5개 컨테이너 기동:
+- `postgres`, `backend`, `frontend`, **`collector-daemon`** (자동 갱신), `dozzle` (로그 뷰어)
 - `collector-init`은 `init` 프로파일이라 기본 기동에 포함되지 않음 (초기 적재 시 수동 실행)
 
 ### 4. 초기 데이터 적재 (최초 1회)
@@ -236,7 +236,7 @@ docker exec stockapp-collector-daemon date
 ## 알려진 제한
 
 - **차트**: 자체 차트 미운영 (TradingView 무료 위젯이 KRX 종목 미지원 + 자체 캔들 차트는 외부 차트 도구 대비 빈약). 종목 상세 페이지에서 TradingView·네이버 금융 직링크 제공.
-- **Redis 캐시**: Spring Boot 3.x + GenericJackson2JsonRedisSerializer 폴리모픽 타입 충돌로 임시 비활성. `NoOpCacheManager` 사용.
+- **애플리케이션 캐시 없음**: Redis 는 제거됨(직렬화 이슈로 비활성 상태였고 384MB만 점유). 조회 캐시는 HTTP `Cache-Control`/`ETag` + Cloudflare 엣지가 대신 흡수한다. `@Cacheable`/`@EnableCaching` 은 남겨 뒀으나 `spring.cache.type=none`(`NoOpCacheManager`)이라 무동작 — 나중에 caffeine 등으로 교체 가능.
 - **--init이 재무제표는 수집 안 함**: DART API 한도 + 시간(30분) 부담 때문. `--weekly`로 별도 실행 필요.
 - **재무제표 첫 적재 시점**: 새해 분기보고서는 회사별 제출 시기가 달라 적재 누락 가능. 사업보고서(11011)는 3월말 제출 후 안정적.
 

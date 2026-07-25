@@ -23,15 +23,11 @@ spring:
     baseline-on-migrate: true
 
   cache:
-    type: none   # RedisConfig에서 NoOpCacheManager 사용 — Jackson 직렬화 이슈로 임시 비활성
-
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      repositories:
-        enabled: false   # Spring Data Redis Repository 스캐닝 비활성 (JPA 전용 프로젝트)
+    # type=none → Spring Boot 가 NoOpCacheManager 를 제공한다. @EnableCaching + @Cacheable 은
+    # 그대로 두되 실제 캐싱은 하지 않는다(모든 조회는 PostgreSQL 직조회). Redis 는 제거됨 —
+    # 조회 캐시는 HTTP Cache-Control + Cloudflare 엣지(CacheControlInterceptor)가 흡수한다.
+    # 나중에 실제 캐시가 필요하면 caffeine 등으로 type 만 교체하면 된다.
+    type: none
 
   jackson:
     serialization:
@@ -54,8 +50,6 @@ management:
         enabled: true
   health:
     db:
-      enabled: true
-    redis:
       enabled: true
 
 logging:

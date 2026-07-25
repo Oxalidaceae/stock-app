@@ -15,10 +15,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "stockapp")
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-
 DART_BASE_URL = "https://opendart.fss.or.kr/api"
 ECOS_BASE_URL = "https://ecos.bok.or.kr/api"
 
