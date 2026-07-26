@@ -9,6 +9,9 @@
 
 > 로컬 개발 기동은 [README.md](../README.md#빠른-시작-docker) 참고. 이 문서는 **공개 배포** 전용.
 
+> **1~9장은 윈도우 기준이다.** 리눅스 서버(Proxmox VM 등)로 옮기려면
+> → [10장. 리눅스 서버로 이관](#10-리눅스-서버로-이관-proxmox-vm--ubuntu)
+
 ---
 
 ## 0. 아키텍처 개요
@@ -431,3 +434,331 @@ wsl --shutdown        # (Docker Desktop 완전 종료 후) — 이후 Docker Des
 1. [Google AdSense](https://adsense.google.com) 사이트 등록 → 소유권 확인 스니펫 삽입
 2. 개인정보처리방침(`/privacy`)·이용약관(`/terms`) 페이지가 푸터에서 접근 가능한지 확인 (이미 구현됨)
 3. 심사 통과 후 광고 슬롯 코드 삽입
+
+---
+
+## 10. 리눅스 서버로 이관 (Proxmox VM + Ubuntu)
+
+윈도우 홈서버에서 **Proxmox VM 위의 Ubuntu**로 옮기는 절차. 애플리케이션 코드는 그대로이고,
+바뀌는 것은 **호스트 OS · cloudflared 실행 방식 · 운영 스크립트**뿐이다.
+
+```
+   [ 기존 ]                              [ 이관 후 ]
+
+ 윈도우 노트북                          Proxmox 호스트
+  ├ cloudflared.exe (윈도우 서비스)       └ VM (Ubuntu 24.04)
+  └ Docker Desktop (WSL2)                    └ Docker (systemd)
+      ├ frontend  :3000 ──┐                      ├ frontend
+      ├ backend           │ localhost            ├ backend
+      ├ postgres          │ 로 연결               ├ postgres
+      ├ collector-daemon  │                      ├ collector-daemon
+      ├ backup            │                      ├ backup
+      └ dozzle ───────────┘                      ├ dozzle
+                                                 └ cloudflared  ← 컨테이너로 흡수
+```
+
+**리눅스로 옮겨서 없어지는 문제**
+
+| 윈도우에서 겪던 것 | 리눅스에서 |
+|---|---|
+| WSL2가 메모리를 반환 안 해 램 99% (8장) | 없음. `.wslconfig` 불필요 |
+| Docker Desktop이 **사용자 로그인 후에야** 기동 (6-2) | `systemctl enable docker` 로 부팅 시 기동 |
+| cloudflared는 뜨는데 Docker는 안 떠서 502 | cloudflared도 같은 compose 안 → 순서 문제 자체가 소멸 |
+| 윈도우 업데이트 자동 재부팅 | `unattended-upgrades` 는 재부팅 안 함(기본값) |
+
+---
+
+### 10-1. VM 생성 (Proxmox)
+
+**LXC(CT)가 아니라 VM으로 만든다.** LXC 안에서 Docker를 돌리려면 `nesting=1`·cgroup 위임·
+AppArmor 예외를 열어야 하는데, DB가 들어가는 서버에서 격리를 얇게 만들 이유가 없다.
+
+| 항목 | 값 | 이유 |
+|---|---|---|
+| OS | Ubuntu Server 24.04 LTS | — |
+| vCPU | 4 | 재무제표 배치·maven 빌드 |
+| RAM | **10GB** (최소 8GB) | `mem_limit` 합계 6GB + 게스트 OS + 빌드 여유 |
+| 디스크 | 64GB, virtio-scsi, **Discard/SSD emulation 켜기** | 삭제 블록 반환 |
+| **Ballooning** | **끄기** (min = max) | 풍선이 메모리를 회수하면 postgres 캐시가 날아간다 |
+| Guest Agent | 설치 | 정상 종료·IP 표시 |
+
+```bash
+sudo apt update && sudo apt install -y qemu-guest-agent && sudo systemctl enable --now qemu-guest-agent
+```
+
+---
+
+### 10-2. Ubuntu 초기 설정
+
+**sudo 계정** (설치 마법사에서 만들었으면 이미 sudo 그룹이다 — `groups` 로 확인)
+
+```bash
+adduser junsu              # 홈 디렉터리·셸까지 만들어 준다 (useradd 아님)
+usermod -aG sudo junsu     # -a 를 빠뜨리면 기존 그룹이 전부 날아간다
+```
+그룹 변경은 **새 로그인 세션부터** 적용된다.
+
+**SSH 키 → 그다음 하드닝** (순서 중요)
+
+```bash
+# 클라이언트에서
+ssh-copy-id junsu@<VM_IP>
+ssh junsu@<VM_IP>          # 키로 들어가지는지 반드시 먼저 확인
+```
+```bash
+# 확인된 뒤에 VM 에서
+sudo tee /etc/ssh/sshd_config.d/99-hardening.conf <<'EOF'
+PermitRootLogin no
+PasswordAuthentication no
+EOF
+sudo systemctl restart ssh
+```
+
+> ⚠ 키 접속을 확인하기 **전에** `PasswordAuthentication no` 를 켜면 못 들어간다.
+> Proxmox 웹UI 콘솔로는 들어갈 수 있으니 완전히 잠기진 않지만, 겪을 이유는 없다.
+>
+> ⚠ 윈도우에서 `scp` 로 덤프를 보낼 예정이라면 **하드닝 전에** 윈도우 쪽 공개키도 등록해 둘 것.
+> 윈도우엔 `ssh-copy-id` 가 없어 수동으로 붙여야 한다:
+> ```powershell
+> type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh junsu@<VM_IP> "cat >> ~/.ssh/authorized_keys"
+> ```
+
+**Docker**
+
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker junsu      # sudo 없이 docker 명령 (재로그인 필요)
+sudo systemctl enable --now docker # ★ 부팅 시 자동 기동
+```
+
+> `docker` 그룹은 사실상 root 권한과 같다(컨테이너로 호스트 파일시스템을 통째로 마운트할 수 있음).
+> 이 VM 은 앱 전용 단일 목적이라 실무상 문제없지만 알고 쓸 것.
+
+**노트북을 서버로 쓰는 경우** — 뚜껑 닫아도 안 자게:
+```bash
+sudo sed -i 's/^#\?HandleLidSwitch=.*/HandleLidSwitch=ignore/' /etc/systemd/logind.conf
+sudo systemctl restart systemd-logind
+```
+
+---
+
+### 10-3. 코드 배치
+
+```bash
+cd ~
+git clone https://github.com/Oxalidaceae/stock-app.git stock_app
+cd stock_app
+git checkout main            # ★ 구 서버와 같은 브랜치로
+mkdir -p logs backups        # ★ 둘 다 .gitignore 라 클론에 없다
+```
+
+**브랜치는 구 서버와 같은 것을 쓴다.** VM 이관 자체가 변수(호스트 OS·도커·DB 복원)인데
+코드까지 바꾸면 문제가 생겼을 때 환경 탓인지 코드 탓인지 분리가 안 된다.
+새 코드 배포는 이관 검증이 끝난 **별개의 작업**으로 한다.
+
+```powershell
+# 구 서버에서 브랜치 확인
+git rev-parse --abbrev-ref HEAD; git log --oneline -1
+```
+
+> `logs/` · `backups/` 를 미리 만들지 않으면 docker 가 bind mount 하면서 **root 소유로 생성**해
+> 이후 로그 정리에 계속 sudo 가 필요해진다.
+
+---
+
+### 10-4. `.env` — 새로 만들지 말고 구 서버 것을 가져온다
+
+`.env` 는 git 에 없다. `.env.example` 을 복사해 채우는 방식은 **세 군데가 조용히 잘못 동작**한다.
+
+| 변수 | 주의 |
+|---|---|
+| `REACTION_IP_SALT` | **반드시 구 서버 값.** 바뀌면 기존 `post_reaction` 의 IP 해시와 어긋나 중복 반응 차단이 그 행들에 한해 풀린다. 구 서버 `.env` 에 **없었다면** `application.yml` 기본값으로 돌던 것이므로 `REACTION_IP_SALT=jipyo-reaction` 으로 넣는다 |
+| `ADMIN_PASSWORD` | **새 값을 넣어도 반영되지 않는다.** `AdminAccountInitializer` 는 같은 username 이 이미 있으면 그냥 return 한다. 덤프 복원으로 `app_users` 가 살아나므로 실제 비밀번호는 구 서버 것 그대로다 → **구 서버 관리자 비밀번호를 알고 있는지 먼저 확인** |
+| `APP_CORS_ALLOWED_ORIGINS` | `.env.example` 의 `https://your-domain.com` 을 그대로 두면 API 호출이 전부 CORS 차단된다 → `https://jipyo.net,https://www.jipyo.net` |
+| `JWT_SECRET` | 새 랜덤값 OK (기존 로그인 세션만 끊김). `.env.example` placeholder 는 블록리스트에 있어 기동을 거부하므로 반드시 교체 |
+| `DB_PASSWORD` | **자유롭게 바꿔도 된다.** 새 `pgdata` 볼륨이 이 값으로 초기화되고, `pg_dump -Fc` 덤프에는 role 비밀번호가 없다 |
+| `DB_NAME` / `DB_USERNAME` | `stockapp` 그대로. 복원 명령이 이 이름을 쓴다 |
+
+```powershell
+# 구 서버 .env 를 그대로 가져오는 쪽이 안전하다
+scp .\.env junsu@<VM_IP>:/home/junsu/stock_app/.env
+```
+
+가져온 뒤 VM 에서 이 네 줄만 손보면 된다:
+
+```env
+BACKUP_DIR=/home/junsu/jipyo-backups     # 윈도우 경로 → 리눅스 경로
+AUTH_COOKIE_SECURE=true                  # 확인
+COMPOSE_PROFILES=tunnel                  # 새로 추가 (cloudflared 서비스 활성화)
+TUNNEL_TOKEN=eyJhIjoi...                 # 새로 추가
+```
+
+```bash
+chmod 600 .env                # 비밀·API 키가 들어 있다
+mkdir -p ~/jipyo-backups      # BACKUP_DIR 을 미리 만들어야 root 소유로 안 생긴다
+openssl rand -base64 48       # JWT_SECRET / DB_PASSWORD 생성용
+```
+
+---
+
+### 10-5. DB 이관 (⚠ 재수집으로 대체 불가)
+
+`guide`(직접 쓴 아티클) · `post` · `post_reaction` · `app_users` · `policy_briefing` 편집분은
+**collector 재수집으로 되살릴 수 없다.** 반드시 덤프를 옮긴다.
+
+**① 구 서버 — 쓰기 정지 후 최종 덤프**
+
+```powershell
+docker compose stop collector-daemon backend
+docker compose exec postgres pg_dump -U stockapp -Fc -f /tmp/final.dump stockapp
+docker cp stockapp-postgres:/tmp/final.dump .\backups\jipyo_final.dump
+```
+
+> ⚠ **PowerShell 에서 `docker exec ... pg_dump > file.dump` 처럼 리다이렉션·파이프를 쓰면 안 된다.**
+> PowerShell 이 출력을 텍스트로 재인코딩해 바이너리 덤프가 깨진다.
+> 반드시 컨테이너 안에 파일로 쓴 뒤 `docker cp` 로 꺼낸다.
+> (WSL bash 의 파이프는 안전하므로 `... | ssh junsu@VM 'cat > ~/jipyo_final.dump'` 도 가능)
+
+**② 전송 — 절대경로로**
+
+```powershell
+scp .\backups\jipyo_final.dump junsu@<VM_IP>:/home/junsu/
+```
+
+> ⚠ 목적지를 `:~/` 로 쓰지 말 것. OpenSSH 9.x 의 scp 는 내부적으로 SFTP 를 쓰는데 버전 조합에 따라
+> `~` 를 확장하지 않아 **`~` 라는 이름의 디렉터리**(`/home/junsu/~/`)가 생긴다.
+> 이미 그렇게 됐다면: `mv ~/'~'/jipyo_final.dump ~/ && rmdir ~/'~'` (따옴표 필수)
+
+**③ 무결성 검증** — 1바이트만 깨져도 복원이 중간에 멈춘다.
+
+```powershell
+Get-FileHash -Algorithm SHA256 .\backups\jipyo_final.dump    # 윈도우
+```
+```bash
+sha256sum ~/jipyo_final.dump                                 # VM — 값이 같아야 한다
+```
+
+**④ 복원 — postgres 만 먼저 띄우고, 복원한 뒤에 backend 를 올린다**
+
+```bash
+cd ~/stock_app
+docker compose up -d postgres                    # 빈 DB 초기화
+./scripts/restore-db.sh ~/jipyo_final.dump       # TOC 검증 후 pg_restore
+docker compose up -d                             # 나머지 전체 (cloudflared 포함)
+```
+
+**이 순서여야 하는 이유**: 덤프에 `flyway_schema_history` 가 같이 들어 있다. 복원 **후에**
+backend 를 띄우면 Flyway 가 기존 이력을 읽고 필요한 마이그레이션만 이어서 적용한다.
+backend 를 먼저 띄우면 Flyway 가 스키마를 만든 뒤 복원이 그걸 다시 덮어쓰는 순서가 된다.
+
+> 구 서버보다 새 코드가 앞서 있으면(예: V10 → V11) 첫 기동에서 그 차이만큼 마이그레이션이
+> 자동 적용된다. 정상 동작이지만 인덱스 생성이 섞이면 첫 기동이 몇 분 걸릴 수 있으니
+> `docker compose logs -f backend` 로 Flyway 로그를 확인할 것.
+
+---
+
+### 10-6. Cloudflare Tunnel 전환
+
+**① 구 서버 터널 정지** (관리자 PowerShell)
+
+```powershell
+Stop-Service cloudflared
+Set-Service cloudflared -StartupType Disabled    # ★ 재부팅으로 되살아나지 않게
+```
+
+> ⚠ **같은 토큰을 두 대에서 동시에 돌리면** Cloudflare 가 둘 다 유효한 커넥터로 보고 트래픽을
+> 나눠 보낸다. 절반의 사용자가 옛 DB 를 보게 되므로 **반드시 구 서버를 먼저 끈다.**
+> 대시보드 Zero Trust → Networks → Tunnels 에서 커넥터 목록이 비었는지 확인.
+
+**② 대시보드 라우팅 변경**
+
+Public hostname 의 Service 를 `http://localhost:3000` → **`http://frontend:80`** 으로 바꾼다.
+cloudflared 가 같은 compose 네트워크 안에 있으므로 서비스 이름으로 직접 붙는다.
+
+**③ 새 VM 에서 기동** — `.env` 에 `COMPOSE_PROFILES=tunnel` 이 있으면 자동 포함된다.
+
+```bash
+docker compose up -d
+docker compose ps                        # cloudflared 가 목록에 있어야 한다
+docker compose logs -f cloudflared       # "Registered tunnel connection" 확인
+```
+
+> `cloudflared` 는 `profiles: [tunnel]` 로 감싸 두었다. 로컬 개발에서 `docker compose up` 할 때
+> 터널이 같이 뜨는 것을 막기 위함이다. 토큰은 `command` 가 아닌 환경변수로 준다 —
+> `command` 에 넣으면 `docker ps` 출력에 토큰이 그대로 노출된다.
+
+---
+
+### 10-7. 검증 & 롤백
+
+```bash
+docker compose ps                                    # 모든 서비스 Up
+curl -I http://localhost:3000                        # 프런트 단독 점검
+curl -s http://localhost:8080/api/companies | head   # 백엔드 단독 점검
+docker compose logs backend | grep -i flyway         # 마이그레이션 정상 적용
+```
+
+브라우저에서:
+- [ ] `https://jipyo.net` HTTPS 정상 (인증서 경고 없음)
+- [ ] 종목 검색·상세·스크리너 동작 (= DB 복원 성공)
+- [ ] **`/guide` 아티클이 다 보이는가** (= 재수집 불가 데이터 이관 확인)
+- [ ] 게시판 글·따봉 수가 이전과 같은가
+- [ ] `/login` 관리자 로그인 성공 (= `app_users` 복원 + 비밀번호 확인)
+- [ ] 관리자 화면에서 글 작성/수정 가능
+
+**롤백**: 구 서버 스택을 지우지 않았다면 되돌리기는 두 단계다.
+```powershell
+Set-Service cloudflared -StartupType Automatic
+Start-Service cloudflared
+```
+대시보드 Service 를 `http://localhost:3000` 으로 되돌리고, 새 VM 의 cloudflared 는 정지한다.
+**구 서버는 새 VM 이 며칠 정상 동작하는 것을 확인한 뒤에 정리한다.**
+Proxmox 스냅샷을 이관 직전·직후에 각각 찍어 두면 VM 쪽 롤백도 즉시 가능하다.
+
+---
+
+### 10-8. 운영 명령 대응표
+
+| 목적 | 윈도우 (1~9장) | 리눅스 |
+|---|---|---|
+| 백업 1회 | `.\scripts\backup-db.ps1` | `./scripts/backup-db.sh` |
+| 복구 | `.\scripts\restore-db.ps1 -File <f>` | `./scripts/restore-db.sh <f>` |
+| 백업 이력 | `Get-Content .\backups\backup.log -Tail 10` | `tail -n 10 ./backups/backup.log` |
+| 터널 재시작 | `Restart-Service cloudflared` | `docker compose restart cloudflared` |
+| 터널 상태 | `Get-Service cloudflared` | `docker compose logs -f cloudflared` |
+| 부팅 자동 기동 | 자동 로그인 + Docker Desktop 설정 | `sudo systemctl enable docker` |
+| 로그뷰어 접속 | `ssh -L 8081:localhost:8081 …` | 동일 |
+| 메모리 확인 | 작업 관리자 / `.wslconfig` | `docker stats` · `free -h` (`.wslconfig` 불필요) |
+
+`docker compose` 명령(`up -d` · `logs -f` · `restart` · `--profile init run` 등)은 양쪽이 동일하다.
+
+**리눅스에서 추가로 챙길 것**
+
+```bash
+sudo apt install -y unattended-upgrades      # 보안 패치 자동 (재부팅은 안 함)
+sudo chown -R junsu:junsu ~/stock_app/logs   # 컨테이너가 root 로 쓴 로그 정리용
+docker system prune -a --filter "until=720h" # 오래된 이미지 정리 (재배포 누적)
+```
+
+`backend/Dockerfile` 의 `-Xmx1280m` 하드코딩은 WSL2 의 cgroup 오탐 회피용이지만,
+네이티브 리눅스에서도 정확한 값이므로 **그대로 둔다.**
+
+---
+
+### 10-9. 이관 체크리스트
+
+- [ ] VM: Ballooning 끄고 RAM 10GB, 디스크 Discard 켬, guest agent 설치
+- [ ] `sudo systemctl enable docker` (부팅 자동 기동)
+- [ ] SSH 키 접속 확인 **후** 비밀번호·root 로그인 차단
+- [ ] 구 서버와 **같은 브랜치**로 clone, `logs/`·`backups/` 미리 생성
+- [ ] `.env` 를 구 서버에서 복사 (`.env.example` 새로 채우지 않기), `chmod 600`
+- [ ] `REACTION_IP_SALT` 가 구 서버와 동일한가 (없었으면 `jipyo-reaction`)
+- [ ] 구 서버 관리자 비밀번호를 알고 있는가 (`.env` 로는 못 바꾼다)
+- [ ] `APP_CORS_ALLOWED_ORIGINS` 가 실제 도메인인가
+- [ ] 덤프 `sha256sum` 이 양쪽 동일한가
+- [ ] postgres → 복원 → 나머지 순서로 기동했는가
+- [ ] 구 서버 cloudflared 를 **정지 + StartupType Disabled** 했는가
+- [ ] 대시보드 Service 를 `http://frontend:80` 으로 바꿨는가
+- [ ] `/guide`·게시판·관리자 로그인까지 확인했는가
+- [ ] 새 서버에서 백업이 도는가 (`docker compose logs backup`, 다음 날 `backups/` 확인)
+- [ ] 구 서버는 며칠 지켜본 뒤 정리 (`cloudflared service uninstall`)

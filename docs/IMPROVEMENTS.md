@@ -101,15 +101,18 @@ String sortBy = SORTABLE.contains(request.getSortBy()) ? request.getSortBy() : "
 
 ### 테스트가 도메인 3개에만 존재
 
-- [~] 백엔드: 36 → **53개 `@Test`** 로 보강. 최근 수정/추가한 코드 우선 커버:
+- [~] 백엔드: 36 → **75개 `@Test`** 로 보강. 순수 로직·보안·고위험 코드 우선 커버:
   - `PaginationTest` (6) — 페이징 클램프(보안 수정 회귀 방지)
   - `CacheControlInterceptorTest` (7) — 캐시 헤더 경로 규칙·제외 로직
   - `ScreenerServiceTest` (4) — `sortBy` 화이트리스트 폴백 + 페이징 클램프
+  - `FinancialServiceTest` (6) — `Bucket`의 당기/전기 병합 집계(가장 위험했던 로직) + 계정
+    매핑(id 우선·name 폴백) + 마진/ROE 파생
+  - `GlobalExceptionHandlerTest` (7) — 400 핸들러(타입불일치·깨진JSON·IllegalArg) + 검증·404·500
+  - `ClientIpTest` (7) — CF/XFF/remoteAddr 우선순위 + salt 해시 결정성
+  - `SitemapServiceTest` (2) — 정적 라우트 + 게시 가이드/글 URL 동적 생성
 - [ ] 아직 남음: **컨트롤러·레포지토리·통합 테스트 0개** (context-load 스모크 포함 —
-      Testcontainers 필요). 아래 고위험 로직도 미검증:
-  - `screener/spec/FinancialMetricSpec.java` — 필터 조합 로직
-  - `financial/service/FinancialService.java:88-128` — `Bucket`의 당기/전기 병합 집계.
-    테스트 없이 손대기 특히 위험한 코드
+      Testcontainers 필요). 아래도 미검증:
+  - `screener/spec/FinancialMetricSpec.java` — 필터 조합(Criteria 컨텍스트 필요 → 통합 테스트)
   - `collector/market/market_pipeline.py` (360줄) — 재무지표 계산
 - [ ] 프론트엔드: 테스트 프레임워크 자체가 없음 (vitest 미설치)
 - [ ] 컬렉터: 테스트 0개
