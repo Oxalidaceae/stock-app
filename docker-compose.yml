@@ -64,10 +64,36 @@ services:
     container_name: stockapp-frontend
     restart: unless-stopped
     mem_limit: 128m
+    # 터널을 컨테이너로 띄우면(cloudflared 서비스) 내부망 frontend:80 으로 직접 붙으므로
+    # 이 포트 노출은 필수가 아니다. 다만 서버에서 `curl localhost:3000` 으로 프런트만
+    # 따로 점검할 때 유용해 loopback 바인딩으로 남겨둔다(외부 노출 아님).
     ports:
       - "127.0.0.1:3000:80"
     depends_on:
       - backend
+
+  # ── Cloudflare Tunnel ──────────────────────────
+  # 리눅스 호스트에서는 cloudflared 를 윈도우 서비스 대신 컨테이너로 띄운다.
+  # 이러면 "터널은 부팅 시 뜨는데 Docker 는 로그인해야 뜬다" 는 윈도우 특유의 함정이 사라지고,
+  # 스택 전체가 docker 하나로 자동 복구된다.
+  #
+  # 활성화: .env 에 COMPOSE_PROFILES=tunnel 과 TUNNEL_TOKEN 을 넣는다(운영 서버에서만).
+  #         프로필로 감싼 이유 — 로컬 개발에서는 터널이 필요 없기 때문.
+  # 대시보드: Public hostname 의 Service 를 http://localhost:3000 → http://frontend:80 으로 변경.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: stockapp-cloudflared
+    restart: unless-stopped
+    mem_limit: 128m
+    # 토큰은 command 대신 환경변수로 준다 — command 에 두면 `docker ps` 출력에 그대로 노출된다.
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TZ: Asia/Seoul
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - frontend
+    profiles:
+      - tunnel
 
   # ── Python Collector (일회성 초기화 — 수동 실행) ──────────
   collector-init:
