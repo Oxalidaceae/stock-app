@@ -3,13 +3,13 @@ package com.stockapp.domain.briefing.service;
 import com.stockapp.common.exception.BusinessException;
 import com.stockapp.common.exception.ErrorCode;
 import com.stockapp.common.response.PageResponse;
+import com.stockapp.common.util.Pagination;
 import com.stockapp.domain.briefing.dto.AdminBriefingResponse;
 import com.stockapp.domain.briefing.dto.UpdateBriefingEditorialRequest;
 import com.stockapp.domain.briefing.entity.EditorialStatus;
 import com.stockapp.domain.briefing.repository.PolicyBriefingRepository;
 import com.stockapp.domain.user.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +27,8 @@ public class AdminBriefingService {
             String q,
             int page,
             int size) {
-        int safeSize = Math.min(Math.max(size, 1), 100);
         var result = briefingRepository
-                .findForAdmin(status, ministry, q, PageRequest.of(Math.max(page, 0), safeSize))
+                .findForAdmin(status, ministry, q, Pagination.adminPage(page, size))
                 .map(AdminBriefingResponse::from);
         return PageResponse.from(result);
     }

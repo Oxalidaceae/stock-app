@@ -5,6 +5,7 @@ import com.stockapp.common.response.PageResponse;
 import com.stockapp.domain.screener.dto.ScreenerRequest;
 import com.stockapp.domain.screener.dto.ScreenerResponse;
 import com.stockapp.domain.screener.service.ScreenerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class ScreenerController {
     private final ScreenerService screenerService;
 
     @PostMapping
-    public ApiResponse<PageResponse<ScreenerResponse>> screen(@RequestBody ScreenerRequest request) {
+    public ApiResponse<PageResponse<ScreenerResponse>> screen(@Valid @RequestBody ScreenerRequest request) {
         return ApiResponse.success(screenerService.screen(request));
     }
 }

@@ -24,20 +24,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # ── Redis ──────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: stockapp-redis
-    restart: unless-stopped
-    mem_limit: 384m
-    # 호스트 포트 미노출 — 내부 docker 네트워크(redis:6379)로만 접근.
-    #   ports: ["127.0.0.1:6379:6379"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   # ── Spring Boot Backend ────────────────────────
   backend:
     build: ./backend
@@ -55,22 +41,21 @@ services:
       DB_NAME: ${DB_NAME:-stockapp}
       DB_USERNAME: ${DB_USERNAME:-stockapp}
       DB_PASSWORD: ${DB_PASSWORD:-stockapp}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
       DART_API_KEY: ${DART_API_KEY}
       ECOS_API_KEY: ${ECOS_API_KEY}
-      JWT_SECRET: ${JWT_SECRET:-default-dev-secret-change-in-production}
+      # :? — .env 에 없으면 기동 자체를 거부. 기본값 fallback 을 두면 저장소에 공개된
+      # 시크릿으로 조용히 떠서 관리자 토큰 위조가 가능해진다.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET 미설정 — .env 에 32자 이상 랜덤값을 넣으세요 (.env.example 참고)}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-https://jipyo.net,https://www.jipyo.net}
       REACTION_RATE_LIMIT_PER_MINUTE: ${REACTION_RATE_LIMIT_PER_MINUTE:-30}
-      REACTION_IP_SALT: ${REACTION_IP_SALT:-jipyo-reaction}
+      # :? — JWT_SECRET 과 동일. 미설정 시 기동 거부. 공개된 기본 salt 로 조용히 뜨면
+      # 저장된 IP 해시에서 원본 IP 를 역산할 수 있다(IPv4 전수 계산 가능).
+      REACTION_IP_SALT: ${REACTION_IP_SALT:?REACTION_IP_SALT 미설정 — .env 에 임의 랜덤값을 넣으세요 (.env.example 참고)}
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   # ── React Frontend (nginx) ────────────────────
@@ -101,12 +86,8 @@ services:
       DB_NAME: ${DB_NAME:-stockapp}
       DB_USERNAME: ${DB_USERNAME:-stockapp}
       DB_PASSWORD: ${DB_PASSWORD:-stockapp}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     profiles:
       - init
@@ -129,12 +110,8 @@ services:
       DB_NAME: ${DB_NAME:-stockapp}
       DB_USERNAME: ${DB_USERNAME:-stockapp}
       DB_PASSWORD: ${DB_PASSWORD:-stockapp}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   # ── DB 자동 백업 ────────────────────────────────
