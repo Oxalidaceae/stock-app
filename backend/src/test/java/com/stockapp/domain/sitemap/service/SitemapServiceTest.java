@@ -51,6 +51,7 @@ class SitemapServiceTest {
         assertThat(xml).contains("<loc>https://jipyo.net/guide/per-guide</loc>");
         assertThat(xml).contains("<lastmod>2026-07-01</lastmod>");        // 날짜만(시간 제거)
         assertThat(xml).contains("<loc>https://jipyo.net/board/42</loc>");
+        assertThat(xml).contains("<loc>https://jipyo.net/board</loc>");   // 글이 있으니 목록도 포함
         assertThat(xml).contains("</urlset>");
     }
 
@@ -66,5 +67,7 @@ class SitemapServiceTest {
         assertThat(xml).contains("<loc>https://jipyo.net/disclosures</loc>");
         assertThat(xml).doesNotContain("/guide/");   // 게시된 가이드 없음
         assertThat(xml).doesNotContain("/board/");   // 게시된 글 없음
+        // 빈 게시판은 목록 URL 자체를 넣지 않는다 (thin content 신호 회피)
+        assertThat(xml).doesNotContain("<loc>https://jipyo.net/board</loc>");
     }
 }

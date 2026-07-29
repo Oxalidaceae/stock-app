@@ -3,6 +3,7 @@ import { useGuide } from '../hooks/useGuides'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { Markdown } from '../components/Markdown'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { EDITORIAL_ANCHOR, EDITORIAL_NAME } from '../lib/site'
 import NotFoundPage from './NotFoundPage'
 
 function fmtDate(iso: string | null | undefined): string {
@@ -43,13 +44,22 @@ export default function GuideArticlePage() {
 
       <article className="card" style={{ padding: 'var(--space-xl)', maxWidth: 860 }}>
         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 'var(--space-lg)' }}>
-          업데이트 {fmtDate(guide.updatedAt ?? guide.publishedAt)} · Jipyo 편집팀
+          작성 {guide.authorName || EDITORIAL_NAME}
+          {guide.publishedAt && <> · 게시 {fmtDate(guide.publishedAt)}</>}
+          {guide.updatedAt && guide.updatedAt !== guide.publishedAt && (
+            <> · 업데이트 {fmtDate(guide.updatedAt)}</>
+          )}
         </div>
 
         <Markdown>{guide.content}</Markdown>
       </article>
 
       <p style={{ maxWidth: 860, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.7, marginTop: 'var(--space-lg)' }}>
+        이 글은 {guide.authorName || EDITORIAL_NAME}이 직접 작성했습니다.{' '}
+        <Link to={EDITORIAL_ANCHOR} style={{ color: 'var(--text-secondary)' }}>
+          편집 방침 보기
+        </Link>
+        <br />
         본 콘텐츠는 투자 정보 제공을 목적으로 하며, 특정 종목의 매수·매도를 권유하지 않습니다.
         투자 판단과 그 결과의 책임은 이용자 본인에게 있습니다.
       </p>

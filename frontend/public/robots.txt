@@ -1,5 +1,12 @@
 User-agent: *
 Allow: /
-Disallow: /api/
+
+# /api/ 는 Disallow 하지 않는다.
+# 본문이 전부 /api/* 응답을 JS 로 그리는 SPA 라서, robots.txt 로 막으면
+# Google 렌더러(WRS)가 XHR 를 가져오지 못해 렌더 결과가 빈 페이지가 되고
+# 사이트 전체가 "발견됨 - 현재 색인이 생성되지 않음" 으로 밀린다.
+# API 응답 자체가 검색 결과에 뜨는 것은 nginx 의 X-Robots-Tag: noindex 로 막는다
+# (robots.txt 로 막으면 크롤러가 그 noindex 를 읽지도 못한다).
+# 색인 제외가 필요한 화면(/login·/admin)도 같은 이유로 헤더 방식을 쓴다.
 
 Sitemap: https://jipyo.net/sitemap.xml

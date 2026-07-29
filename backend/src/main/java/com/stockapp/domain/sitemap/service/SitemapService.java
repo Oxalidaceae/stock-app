@@ -42,12 +42,18 @@ public class SitemapService {
             new StaticRoute("/screener", "weekly", "0.7"),
             new StaticRoute("/compare", "weekly", "0.7"),
             new StaticRoute("/guide", "weekly", "0.6"),
-            new StaticRoute("/board", "weekly", "0.6"),
             new StaticRoute("/about", "monthly", "0.5"),
             new StaticRoute("/contact", "monthly", "0.5"),
             new StaticRoute("/privacy", "monthly", "0.3"),
             new StaticRoute("/terms", "monthly", "0.3")
     );
+
+    /**
+     * 게시판 목록. 게시된 글이 하나도 없으면 사이트맵에 넣지 않는다 —
+     * 빈 섹션을 크롤러에 제출하면 thin content 신호가 된다.
+     * (사이드바 노출도 같은 조건으로 숨긴다: frontend Sidebar/useHasPosts)
+     */
+    private static final StaticRoute BOARD_ROUTE = new StaticRoute("/board", "weekly", "0.6");
 
     @Transactional(readOnly = true)
     public String buildXml() {
@@ -55,14 +61,20 @@ public class SitemapService {
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 
+        List<Post> posts = postRepository.findAllByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED);
+
         for (StaticRoute route : STATIC_ROUTES) {
             appendUrl(xml, ORIGIN + route.path(), null, route.changefreq(), route.priority());
+        }
+        if (!posts.isEmpty()) {
+            appendUrl(xml, ORIGIN + BOARD_ROUTE.path(), null,
+                    BOARD_ROUTE.changefreq(), BOARD_ROUTE.priority());
         }
         for (Guide guide : guideRepository.findByStatusOrderByPublishedAtDesc(GuideStatus.PUBLISHED)) {
             appendUrl(xml, ORIGIN + "/guide/" + guide.getSlug(),
                     guide.getUpdatedAt(), "monthly", "0.6");
         }
-        for (Post post : postRepository.findAllByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED)) {
+        for (Post post : posts) {
             appendUrl(xml, ORIGIN + "/board/" + post.getId(),
                     post.getUpdatedAt(), "monthly", "0.5");
         }

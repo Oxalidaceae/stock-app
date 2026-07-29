@@ -129,7 +129,13 @@ function BriefingArticle({ b }: { b: PolicyBriefing }) {
 export default function NewsPage() {
   const [ministry, setMinistry] = useState('전체')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)  // null = 전체(최근순)
-  const [curatedOnly, setCuratedOnly] = useState(false)                   // 요약(게시)만 보기
+  /*
+   * 기본값 = Jipyo 요약만. 전체 목록은 정책브리핑 RSS 의 제목·링크 모음이라
+   * 그 자체로는 원본 콘텐츠가 아니고(Google 게시자 정책상 scraped content),
+   * 크롤러는 JS 상태를 바꿀 수 없으므로 색인되는 /news 는 이 큐레이션 뷰가 된다.
+   * 전체 목록은 사용자가 버튼으로 펼쳐 볼 수 있게 그대로 남긴다.
+   */
+  const [curatedOnly, setCuratedOnly] = useState(true)
   const [page, setPage] = useState(0)
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
   const apiMinistry = ministry === '전체' ? '' : ministry
@@ -191,7 +197,10 @@ export default function NewsPage() {
     <>
       <div className="page-header">
         <h1 className="page-title">경제 소식</h1>
-        <p className="page-subtitle">기획재정부·금융위원회·관세청 정책 발표 — 정책브리핑</p>
+        <p className="page-subtitle">
+          기획재정부·금융위원회·관세청 정책 발표 가운데 투자자가 알아 둘 만한 건을 골라
+          Jipyo가 직접 요약하고, 관련 지표를 함께 표시합니다.
+        </p>
       </div>
 
       {/* 부처 필터 + 출처 */}
@@ -267,20 +276,20 @@ export default function NewsPage() {
             {curatedOnly
               ? 'Jipyo 요약'
               : selectedDate
-                ? `${fmtTabDate(selectedDate)} 경제 소식`
-                : '전체 소식 · 최근순'}
+                ? `${fmtTabDate(selectedDate)} 발표 목록`
+                : '전체 발표 목록 · 최근순'}
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
             <button
               className="btn btn-sm"
               onClick={toggleCurated}
               style={{
-                background: curatedOnly ? 'var(--accent-orange-dim)' : undefined,
-                color: curatedOnly ? 'var(--accent-orange)' : undefined,
-                borderColor: curatedOnly ? 'var(--accent-orange)' : undefined,
+                background: curatedOnly ? undefined : 'var(--accent-orange-dim)',
+                color: curatedOnly ? undefined : 'var(--accent-orange)',
+                borderColor: curatedOnly ? undefined : 'var(--accent-orange)',
               }}
             >
-              요약만 보기
+              {curatedOnly ? '전체 발표 목록 보기' : 'Jipyo 요약만 보기'}
             </button>
             {data && (
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -314,7 +323,17 @@ export default function NewsPage() {
           </>
         ) : (
           <div className="empty-state">
-            {curatedOnly ? '아직 게시된 요약이 없습니다' : '표시할 소식이 없습니다'}
+            {curatedOnly ? (
+              <>
+                아직 이 조건에 해당하는 Jipyo 요약이 없습니다.
+                <br />
+                <button className="btn btn-sm" onClick={toggleCurated} style={{ marginTop: 10 }}>
+                  전체 발표 목록 보기
+                </button>
+              </>
+            ) : (
+              '표시할 소식이 없습니다'
+            )}
           </div>
         )}
       </div>

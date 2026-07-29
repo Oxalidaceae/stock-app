@@ -8,6 +8,19 @@ export const usePosts = (page: number) =>
     queryFn: () => getPosts(page),
   })
 
+/**
+ * 게시된 글이 하나라도 있는지. 게시판이 비어 있는 동안에는 사이드바에서 메뉴를
+ * 숨겨, 빈 섹션이 노출되지 않게 한다(글이 올라오면 자동으로 다시 나타난다).
+ * 레이아웃 전역에서 쓰이므로 1건만 조회하고 캐시를 길게 잡는다.
+ */
+export const useHasPosts = () =>
+  useQuery({
+    queryKey: ['posts', 'any'],
+    queryFn: () => getPosts(0, 1).then((p) => p.totalElements > 0),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  })
+
 export const usePost = (id: number, voterId?: string) =>
   useQuery({
     queryKey: ['post', id],
