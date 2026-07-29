@@ -1,4 +1,52 @@
+import { Fragment, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  CONTACT_EMAIL,
+  EDITORIAL_NAME,
+  OPERATOR_NAME,
+  SERVICE_SINCE,
+  SITE_ORIGIN,
+} from '../lib/site'
+
+/**
+ * 콘텐츠 제작·검수 절차. 실제 운영과 일치해야 하는 대외 약속이다.
+ * (AdSense·검색 품질 평가에서 "누가 어떤 기준으로 만드는가"를 확인하는 근거가 된다.)
+ */
+const editorialPolicy: [string, string][] = [
+  [
+    '아티클은 직접 작성합니다',
+    `투자 가이드의 모든 글은 ${EDITORIAL_NAME}이 직접 작성합니다. 외부 기고나 홍보성 원고는 게재하지 않으며, 각 글에 작성 주체와 게시일·최종 수정일을 표시합니다.`,
+  ],
+  [
+    '경제 소식은 골라서 요약합니다',
+    '정책브리핑에 올라오는 발표 가운데 투자자가 알아 둘 만한 건을 선별해 Jipyo가 자체 요약을 붙이고 관련 지표를 연결합니다. 원문 발췌를 그대로 옮겨 싣지 않으며, 발표 전문은 항상 원문 링크로 안내합니다.',
+  ],
+  [
+    '수치는 원본에서 계산합니다',
+    'PER·PBR·ROE 같은 지표는 DART 재무제표 원본에서 계산하며, 화면마다 데이터 출처와 기준 시점을 표시해 이용자가 원문을 직접 확인할 수 있게 합니다.',
+  ],
+  [
+    '오류는 확인 후 정정합니다',
+    `데이터나 서술의 오류를 알려 주시면 원본과 대조해 확인한 뒤 정정하고, 해당 글의 수정일을 갱신합니다. 제보는 ${CONTACT_EMAIL} 으로 받습니다.`,
+  ],
+  [
+    '광고와 콘텐츠는 분리합니다',
+    '사이트 운영비는 광고로 충당하며, 광고는 콘텐츠와 구분되는 영역에 표시합니다. 광고주가 아티클의 주제나 서술에 관여하지 않습니다.',
+  ],
+  [
+    '투자 자문이 아닙니다',
+    'Jipyo는 투자 판단에 필요한 정보를 정리해 보여줄 뿐, 특정 종목의 매수·매도를 권유하거나 수익을 보장하지 않습니다. 투자 판단과 그 결과의 책임은 이용자 본인에게 있습니다.',
+  ],
+]
+
+const operatorInfo: [string, ReactNode][] = [
+  ['서비스명', 'Jipyo (지표)'],
+  ['사이트', SITE_ORIGIN.replace(/^https?:\/\//, '')],
+  ...(OPERATOR_NAME ? ([['운영자', OPERATOR_NAME]] as [string, ReactNode][]) : []),
+  ['콘텐츠 작성', EDITORIAL_NAME],
+  ['운영 시작', SERVICE_SINCE],
+  ['문의', <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'var(--accent-orange)' }}>{CONTACT_EMAIL}</a>],
+]
 
 const dataSources = [
   {
@@ -83,13 +131,54 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section>
+        <section style={{ marginBottom: 'var(--space-xl)' }}>
           <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-sm)' }}>운영 원칙</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.9 }}>
             Jipyo는 특정 종목의 매수·매도를 권유하거나 투자자문을 제공하지 않습니다.
             정보의 오류, 출처 표기 또는 서비스 이용에 관한 의견은{' '}
             <Link to="/contact" style={{ color: 'var(--accent-orange)' }}>문의하기</Link> 페이지에서 알려주세요.
           </p>
+        </section>
+
+        {/*
+          편집 방침 — 가이드 아티클 하단에서 이 앵커(/about#editorial)로 링크한다.
+          누가 어떤 절차로 콘텐츠를 만드는지 밝히는 섹션으로, 금융 정보 사이트의
+          신뢰도 평가에서 직접 참조된다. 아래 항목은 대외 약속이므로 실제 운영과
+          어긋나면 수정할 것.
+        */}
+        <section id="editorial" style={{ marginBottom: 'var(--space-xl)', scrollMarginTop: 'var(--space-xl)' }}>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-md)' }}>편집 방침</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            {editorialPolicy.map(([title, description]) => (
+              <div key={title}>
+                <h3 style={{ fontSize: '0.88rem', marginBottom: 4 }}>{title}</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.7 }}>
+                  {description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-md)' }}>운영 정보</h2>
+          <dl
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '8px var(--space-lg)',
+              margin: 0,
+              fontSize: '0.85rem',
+              lineHeight: 1.7,
+            }}
+          >
+            {operatorInfo.map(([label, value]) => (
+              <Fragment key={label}>
+                <dt style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{label}</dt>
+                <dd style={{ margin: 0, color: 'var(--text-secondary)' }}>{value}</dd>
+              </Fragment>
+            ))}
+          </dl>
         </section>
       </div>
     </>

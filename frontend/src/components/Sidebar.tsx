@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
+import { useHasPosts } from '../hooks/usePosts'
 
 const links = [
   { to: '/',            icon: '◉', label: '대시보드' },
@@ -22,6 +23,11 @@ export function Sidebar({ open = false, onNavigate }: SidebarProps) {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggle)
 
+  // 게시판은 글이 하나라도 게시된 뒤에만 메뉴에 노출한다.
+  // (조회 실패·로딩 중에는 숨김 — 빈 섹션이 잠깐 보이는 쪽이 더 나쁘다.)
+  const { data: hasPosts } = useHasPosts()
+  const visibleLinks = links.filter((link) => link.to !== '/board' || hasPosts === true)
+
   return (
     <aside className={`app-sidebar${open ? ' open' : ''}`}>
       <div className="sidebar-logo">
@@ -37,7 +43,7 @@ export function Sidebar({ open = false, onNavigate }: SidebarProps) {
         <span style={{ fontWeight: 400, fontSize: '0.72rem', color: 'var(--text-muted)', letterSpacing: 0 }}>지표</span>
       </div>
       <nav className="sidebar-nav">
-        {links.map((link) => (
+        {visibleLinks.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}

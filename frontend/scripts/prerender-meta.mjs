@@ -17,7 +17,10 @@ const DIST = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const ORIGIN = 'https://jipyo.net'
 /** 가이드 본문을 읽어올 API 오리진. 로컬 빌드에서는 PRERENDER_API_ORIGIN 으로 덮어쓴다. */
 const API_ORIGIN = process.env.PRERENDER_API_ORIGIN || ORIGIN
-const SUFFIX = ' | Jipyo (지표)'
+const SITE_NAME = 'Jipyo (지표)'
+const SUFFIX = ` | ${SITE_NAME}`
+/** 저자 미지정 아티클의 편집 주체. src/lib/site.ts 의 EDITORIAL_NAME 과 같은 값. */
+const EDITORIAL_NAME = 'Jipyo 편집팀'
 
 // 경로별 메타. '/' 는 dist/index.html 을 덮어쓴다.
 // heading 은 정적 본문의 <h1> — title 에서 사이트명 접미사를 뺀 형태.
@@ -50,9 +53,10 @@ const ROUTES = [
   },
   {
     path: '/news',
-    title: `경제 소식 — 대한민국 정책브리핑 경제 뉴스${SUFFIX}`,
+    title: `경제 소식 — 정책 발표 Jipyo 요약${SUFFIX}`,
     heading: '경제 소식',
-    description: '대한민국 정책브리핑(공공누리) RSS 기반 최신 경제·정책 소식을 모아 제공합니다.',
+    description:
+      '기획재정부·금융위원회·관세청의 정책 발표 가운데 투자자가 알아 둘 만한 건을 골라 Jipyo가 직접 요약하고, 관련 지표를 함께 표시합니다.',
   },
   {
     path: '/screener',
@@ -77,12 +81,17 @@ const ROUTES = [
     title: `게시판 — Jipyo 소식과 이야기${SUFFIX}`,
     heading: '게시판',
     description: 'Jipyo 운영진이 전하는 공지, 업데이트 소식과 투자 관련 이야기를 모은 게시판입니다.',
+    // 게시된 글이 하나도 없으면 이 경로는 프리렌더·메뉴에서 빠진다.
+    // 빈 섹션을 크롤러에 노출하면 thin content 신호가 되기 때문
+    // (사이트맵은 백엔드 SitemapService, 사이드바는 useHasPosts 가 같은 조건으로 처리).
+    requiresPosts: true,
   },
   {
     path: '/about',
-    title: `Jipyo 소개 — 서비스 목적과 데이터 출처${SUFFIX}`,
+    title: `Jipyo 소개 — 편집 방침과 데이터 출처${SUFFIX}`,
     heading: 'Jipyo 소개',
-    description: 'Jipyo(지표)의 서비스 목적, 제공 기능, 데이터 출처와 운영 원칙을 안내합니다.',
+    description:
+      'Jipyo(지표)의 서비스 목적과 데이터 출처, 아티클을 누가 어떤 기준으로 작성하고 정정하는지 편집 방침을 안내합니다.',
   },
   {
     path: '/contact',
@@ -131,6 +140,59 @@ const ROOT_MARKER = '<div id="root"></div>'
 const setShellBody = (html, bodyHtml) =>
   html.replace(ROOT_MARKER, `<div id="root">${bodyHtml}</div>`)
 
+/* ── 구조화 데이터(JSON-LD) ───────────────────── */
+// 금융 정보는 Google 이 "누가 썼는가"를 특히 따지는 분야(YMYL)라, 저자·발행처·게시일을
+// 기계가 읽을 수 있는 형태로 명시한다. 프리렌더 HTML 에 직접 박아 JS 실행 전에도 읽힌다.
+
+/** </script> 로 스크립트를 탈출하지 못하도록 '<' 를 이스케이프해 삽입한다. */
+const appendJsonLd = (html, blocks) =>
+  html.replace(
+    '</head>',
+    blocks
+      .map(
+        (block) =>
+          `  <script type="application/ld+json">${JSON.stringify(block).replace(/</g, '\\u003c')}</script>\n`,
+      )
+      .join('') + '  </head>',
+  )
+
+const PUBLISHER = {
+  '@type': 'Organization',
+  name: SITE_NAME,
+  url: ORIGIN,
+  logo: { '@type': 'ImageObject', url: `${ORIGIN}/favicon.svg` },
+}
+
+/** LocalDateTime('2026-07-02T09:22:58.8') → '2026-07-02'. 시간대가 없어 날짜만 쓴다. */
+const isoDate = (value) => (typeof value === 'string' ? value.slice(0, 10) : undefined)
+
+const articleJsonLd = (guide, url, description) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: guide.title,
+  description,
+  inLanguage: 'ko-KR',
+  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+  author: {
+    '@type': 'Organization',
+    name: guide.authorName || EDITORIAL_NAME,
+    url: `${ORIGIN}/about#editorial`,
+  },
+  publisher: PUBLISHER,
+  datePublished: isoDate(guide.publishedAt),
+  dateModified: isoDate(guide.updatedAt) || isoDate(guide.publishedAt),
+})
+
+const breadcrumbJsonLd = (guide, url) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: '홈', item: `${ORIGIN}/` },
+    { '@type': 'ListItem', position: 2, name: '투자 가이드', item: `${ORIGIN}/guide` },
+    { '@type': 'ListItem', position: 3, name: guide.title, item: url },
+  ],
+})
+
 /* ── 정적 본문 ───────────────────────────────── */
 
 const S = {
@@ -141,15 +203,24 @@ const S = {
   nav: 'margin-top:32px;padding-top:16px;border-top:1px solid rgba(128,128,128,0.3);font-size:0.85rem',
   navLink: 'margin-right:14px;white-space:nowrap',
   list: 'margin:0 0 28px;padding-left:20px',
+  byline: 'font-size:0.8rem;opacity:0.7;margin:0 0 24px',
 }
+
+/**
+ * 이번 빌드에서 실제로 생성할 경로. requiresPosts 같은 조건은 API 조회 뒤에야
+ * 판정할 수 있어, 아래 생성 단계에서 좁혀 넣는다.
+ */
+let activeRoutes = ROUTES
 
 /** 전체 메뉴 링크 — 크롤러가 사이트맵 없이도 모든 정적 경로를 타고 다닐 수 있게 한다. */
 const navHtml = () =>
   `<nav style="${S.nav}" aria-label="주요 메뉴">` +
-  ROUTES.map(
-    (r) =>
-      `<a href="${escAttr(r.path)}" style="${S.navLink}">${escText(r.navLabel || r.heading)}</a>`,
-  ).join('') +
+  activeRoutes
+    .map(
+      (r) =>
+        `<a href="${escAttr(r.path)}" style="${S.navLink}">${escText(r.navLabel || r.heading)}</a>`,
+    )
+    .join('') +
   '</nav>'
 
 /** 정적 본문 셸: 브랜드 링크 + 제목 + 설명 + (선택) 추가 마크업 + 전체 메뉴. */
@@ -243,6 +314,19 @@ async function fetchGuides() {
   }
 }
 
+/** 게시된 글이 하나라도 있는지. 조회 실패 시 false(= 게시판 숨김)로 간주한다. */
+async function hasPublishedPosts() {
+  try {
+    const page = await fetchJson('/api/posts?page=0&size=1')
+    return (page?.totalElements ?? 0) > 0
+  } catch (err) {
+    console.warn(
+      `[prerender-meta] 게시글 API 조회 실패 — 게시판을 숨긴 채로 빌드합니다: ${err.message}`,
+    )
+    return false
+  }
+}
+
 /** 메타 description 길이 정리 (검색결과 스니펫 기준 ~160자). */
 const clamp = (s, max = 160) => {
   const t = s.replace(/\s+/g, ' ').trim()
@@ -260,7 +344,7 @@ if (!template.includes(ROOT_MARKER)) {
 }
 
 /** 공통: head 메타를 채운 HTML 을 만든다. url 이 없으면 canonical 을 제거한다. */
-function buildPage({ title, description, url, bodyHtml }) {
+function buildPage({ title, description, url, bodyHtml, jsonLd = [] }) {
   let html = template
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escText(title)}</title>`)
   html = setAttrMeta(html, 'name', 'description', description)
@@ -274,6 +358,7 @@ function buildPage({ title, description, url, bodyHtml }) {
   } else {
     html = dropUrlMeta(html)
   }
+  if (jsonLd.length) html = appendJsonLd(html, jsonLd)
   return setShellBody(html, bodyHtml)
 }
 
@@ -283,7 +368,10 @@ const write = (routePath, html) => {
   writeFileSync(resolve(outDir, 'index.html'), html)
 }
 
-const guides = await fetchGuides()
+const [guides, hasPosts] = await Promise.all([fetchGuides(), hasPublishedPosts()])
+
+// 조건부 경로를 걸러 낸다. navHtml() 도 이 목록을 읽으므로 페이지 생성 전에 확정해야 한다.
+activeRoutes = ROUTES.filter((r) => !r.requiresPosts || hasPosts)
 
 // 가이드 목록 페이지에는 각 글로 가는 링크를 정적으로 심어, 크롤러가 사이트맵 없이도
 // 가이드 상세를 발견할 수 있게 한다.
@@ -300,7 +388,20 @@ const guideListExtra = guides.length
     '</ul>'
   : ''
 
-for (const route of ROUTES) {
+// 홈에는 사이트 정체성(발행처)을 명시한다.
+const siteJsonLd = [
+  { '@context': 'https://schema.org', ...PUBLISHER },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: ORIGIN,
+    inLanguage: 'ko-KR',
+    publisher: PUBLISHER,
+  },
+]
+
+for (const route of activeRoutes) {
   const url = `${ORIGIN}${route.path}`
   write(
     route.path,
@@ -308,6 +409,7 @@ for (const route of ROUTES) {
       title: route.title,
       description: route.description,
       url,
+      jsonLd: route.path === '/' ? siteJsonLd : [],
       bodyHtml: shellBody({
         heading: route.heading,
         description: route.description,
@@ -323,16 +425,22 @@ for (const route of ROUTES) {
 for (const guide of guides) {
   const title = `${guide.title}${SUFFIX}`
   const description = clamp(guide.summary || guide.content)
+  const url = `${ORIGIN}/guide/${guide.slug}`
+  const byline =
+    `<p style="${S.byline}">작성 ${escText(guide.authorName || EDITORIAL_NAME)}` +
+    (isoDate(guide.publishedAt) ? ` · 게시 ${isoDate(guide.publishedAt)}` : '') +
+    '</p>'
   write(
     `/guide/${guide.slug}`,
     buildPage({
       title,
       description,
-      url: `${ORIGIN}/guide/${guide.slug}`,
+      url,
+      jsonLd: [articleJsonLd(guide, url, description), breadcrumbJsonLd(guide, url)],
       bodyHtml: shellBody({
         heading: guide.title,
         description: guide.summary || '',
-        extra: `<article>${markdownToHtml(guide.content)}</article>`,
+        extra: byline + `<article>${markdownToHtml(guide.content)}</article>`,
       }),
     }),
   )
@@ -376,6 +484,7 @@ writeFileSync(
 }
 
 console.log(
-  `[prerender-meta] 정적 경로 ${ROUTES.length}개 + 가이드 상세 ${guides.length}개 ` +
-    '+ app-shell.html + 404.html 생성 완료',
+  `[prerender-meta] 정적 경로 ${activeRoutes.length}개 + 가이드 상세 ${guides.length}개 ` +
+    '+ app-shell.html + 404.html 생성 완료' +
+    (hasPosts ? '' : ' (게시판 제외 — 게시된 글 없음)'),
 )
