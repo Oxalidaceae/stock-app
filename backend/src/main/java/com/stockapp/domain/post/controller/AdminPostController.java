@@ -4,6 +4,7 @@ import com.stockapp.common.response.ApiResponse;
 import com.stockapp.common.response.PageResponse;
 import com.stockapp.domain.post.dto.AdminPostResponse;
 import com.stockapp.domain.post.dto.PostRequest;
+import com.stockapp.domain.post.entity.PostCategory;
 import com.stockapp.domain.post.entity.PostStatus;
 import com.stockapp.domain.post.service.AdminPostService;
 import com.stockapp.security.UserPrincipal;
@@ -22,9 +23,10 @@ public class AdminPostController {
     @GetMapping
     public ApiResponse<PageResponse<AdminPostResponse>> getPosts(
             @RequestParam(required = false) PostStatus status,
+            @RequestParam(required = false) PostCategory category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(adminPostService.getPosts(status, page, size));
+        return ApiResponse.success(adminPostService.getPosts(status, category, page, size));
     }
 
     @PostMapping

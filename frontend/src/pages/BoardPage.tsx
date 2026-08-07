@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { usePosts } from '../hooks/usePosts'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { EDITORIAL_NAME } from '../lib/site'
+import { CATEGORY_LABELS, CATEGORY_ORDER, categoryLabel } from '../lib/postCategory'
+import type { PostCategory } from '../types/api'
 import { PageIntro } from '../components/PageIntro'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
@@ -20,9 +22,16 @@ export default function BoardPage() {
     path: '/board',
   })
 
+  // '' = 전체 분류
+  const [category, setCategory] = useState<PostCategory | ''>('')
   const [page, setPage] = useState(0)
-  const { data, isLoading, error } = usePosts(page)
+  const { data, isLoading, error } = usePosts(page, category || undefined)
   const posts = data?.content
+
+  const selectCategory = (next: PostCategory | '') => {
+    setCategory(next)
+    setPage(0)   // 분류를 바꾸면 페이지 수가 달라지므로 첫 장으로
+  }
 
   return (
     <>
@@ -35,6 +44,29 @@ export default function BoardPage() {
         Jipyo의 공지와 서비스 업데이트, 그리고 데이터를 다루며 얻은 생각을 자유롭게 남기는 공간입니다.
         각 글에는 로그인 없이 따봉(추천)·비추(비추천)로 의견을 표시할 수 있습니다.
       </PageIntro>
+
+      {/* 분류 필터 */}
+      <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {([''] as (PostCategory | '')[]).concat(CATEGORY_ORDER).map((value) => {
+            const active = category === value
+            return (
+              <button
+                key={value || 'ALL'}
+                className="btn btn-sm"
+                onClick={() => selectCategory(value)}
+                style={{
+                  background: active ? 'var(--accent-orange-dim)' : undefined,
+                  color: active ? 'var(--accent-orange)' : undefined,
+                  borderColor: active ? 'var(--accent-orange)' : undefined,
+                }}
+              >
+                {value ? CATEGORY_LABELS[value] : '전체'}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       <div className="card">
         <div className="card-header">
@@ -61,8 +93,13 @@ export default function BoardPage() {
                     color: 'inherit',
                   }}
                 >
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-                    {p.title}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span className="badge" style={{ color: 'var(--accent-orange)', borderColor: 'var(--accent-orange-dim)' }}>
+                      {categoryLabel(p.category)}
+                    </span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {p.title}
+                    </span>
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 6 }}>
                     {p.excerpt}
@@ -89,7 +126,9 @@ export default function BoardPage() {
             )}
           </>
         ) : (
-          <div className="empty-state">아직 게시된 글이 없습니다</div>
+          <div className="empty-state">
+            {category ? `'${CATEGORY_LABELS[category]}' 분류에 글이 없습니다` : '아직 게시된 글이 없습니다'}
+          </div>
         )}
       </div>
     </>

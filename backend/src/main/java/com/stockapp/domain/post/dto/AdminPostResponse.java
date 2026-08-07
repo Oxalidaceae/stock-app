@@ -14,6 +14,7 @@ public class AdminPostResponse {
     private final Long id;
     private final String title;
     private final String content;
+    private final String category;
     private final String status;
     private final int likeCount;
     private final int dislikeCount;
@@ -27,6 +28,7 @@ public class AdminPostResponse {
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
+                post.getCategory().name(),
                 post.getStatus().name(),
                 post.getLikeCount(),
                 post.getDislikeCount(),

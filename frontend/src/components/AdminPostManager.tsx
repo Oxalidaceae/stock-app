@@ -3,7 +3,8 @@ import { useAdminPosts, useCreatePost, useDeletePost, useUpdatePost } from '../h
 import { LoadingSpinner } from './LoadingSpinner'
 import { ErrorFallback } from './ErrorFallback'
 import { ApiError } from '../api/client'
-import type { AdminPost, PostStatus } from '../types/api'
+import { CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/postCategory'
+import type { AdminPost, PostCategory, PostStatus } from '../types/api'
 
 const STATUS_FILTERS: { value: PostStatus | ''; label: string }[] = [
   { value: '', label: '전체 상태' },
@@ -47,6 +48,8 @@ function PostEditor({ post, onSaved, onDeleted }: {
   const isNew = !post
   const [title, setTitle] = useState(post?.title ?? '')
   const [content, setContent] = useState(post?.content ?? '')
+  // 새 글 기본값은 공지 — 게시판에 올라오는 글 대부분이 공지 성격이다.
+  const [category, setCategory] = useState<PostCategory>(post?.category ?? 'NOTICE')
 
   const createMutation = useCreatePost()
   const updateMutation = useUpdatePost()
@@ -56,7 +59,7 @@ function PostEditor({ post, onSaved, onDeleted }: {
   const save = (status: PostStatus) => {
     if (!title.trim()) { window.alert('제목을 입력해주세요.'); return }
     if (!content.trim()) { window.alert('내용을 입력해주세요.'); return }
-    const request = { title: title.trim(), content, status }
+    const request = { title: title.trim(), content, category, status }
 
     const onSuccess = (saved: AdminPost) => {
       window.alert(SAVE_SUCCESS[status])
@@ -92,6 +95,20 @@ function PostEditor({ post, onSaved, onDeleted }: {
             👍 {post!.likeCount} · 👎 {post!.dislikeCount}
           </span>
         )}
+      </div>
+
+      <div className="form-group" style={{ marginBottom: 'var(--space-lg)' }}>
+        <label className="form-label" htmlFor="post-category">분류</label>
+        <select
+          id="post-category"
+          className="form-select"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as PostCategory)}
+        >
+          {CATEGORY_ORDER.map((value) => (
+            <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>
+          ))}
+        </select>
       </div>
 
       <div className="form-group" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -150,9 +167,10 @@ function PostEditor({ post, onSaved, onDeleted }: {
 
 export function AdminPostManager() {
   const [status, setStatus] = useState<PostStatus | ''>('')
+  const [category, setCategory] = useState<PostCategory | ''>('')
   const [page, setPage] = useState(0)
   const [selected, setSelected] = useState<Selection>('new')
-  const { data, isLoading, error } = useAdminPosts(status, page)
+  const { data, isLoading, error } = useAdminPosts(status, category, page)
 
   return (
     <>
@@ -166,6 +184,19 @@ export function AdminPostManager() {
               onChange={(e) => { setStatus(e.target.value as PostStatus | ''); setPage(0) }}
             >
               {STATUS_FILTERS.map((o) => <option key={o.value || 'all'} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">분류</label>
+            <select
+              className="form-select"
+              value={category}
+              onChange={(e) => { setCategory(e.target.value as PostCategory | ''); setPage(0) }}
+            >
+              <option value="">전체 분류</option>
+              {CATEGORY_ORDER.map((value) => (
+                <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>
+              ))}
             </select>
           </div>
           <button className="btn btn-primary" type="button" style={{ marginLeft: 'auto' }} onClick={() => setSelected('new')}>
@@ -207,7 +238,8 @@ export function AdminPostManager() {
                       }}
                     >
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4, display: 'flex', gap: 6 }}>
-                        <span>{STATUS_LABELS[post.status]}</span>
+                        <span>{CATEGORY_LABELS[post.category] ?? post.category}</span>
+                        <span>· {STATUS_LABELS[post.status]}</span>
                         <span>· {formatDate(post.updatedAt)}</span>
                       </div>
                       <div style={{ fontSize: '0.82rem', lineHeight: 1.5 }}>{post.title}</div>

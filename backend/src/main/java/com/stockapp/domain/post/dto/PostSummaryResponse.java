@@ -13,6 +13,7 @@ public class PostSummaryResponse {
 
     private final Long id;
     private final String title;
+    private final String category;
     private final String excerpt;
     private final int likeCount;
     private final int dislikeCount;
@@ -25,6 +26,7 @@ public class PostSummaryResponse {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getTitle(),
+                post.getCategory().name(),
                 excerpt(post.getContent()),
                 post.getLikeCount(),
                 post.getDislikeCount(),

@@ -3,6 +3,7 @@ package com.stockapp.domain.post.service;
 import com.stockapp.common.exception.BusinessException;
 import com.stockapp.common.exception.ErrorCode;
 import com.stockapp.domain.post.entity.Post;
+import com.stockapp.domain.post.entity.PostCategory;
 import com.stockapp.domain.post.entity.PostReaction;
 import com.stockapp.domain.post.entity.PostStatus;
 import com.stockapp.domain.post.entity.ReactionType;
@@ -11,11 +12,16 @@ import com.stockapp.domain.post.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class PostServiceTest {
@@ -34,7 +40,45 @@ class PostServiceTest {
     }
 
     private Post publishedPost() {
-        return Post.create("제목", "내용", PostStatus.PUBLISHED, null);
+        return Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.PUBLISHED, null);
+    }
+
+    @Test
+    void getPostsWithoutCategoryListsEveryPublishedPost() {
+        when(postRepository.findByStatusOrderByPublishedAtDesc(eq(PostStatus.PUBLISHED), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(publishedPost())));
+
+        var response = postService.getPosts(null, 0, 20);
+
+        assertThat(response.getContent()).hasSize(1);
+        // 분류 조건 없이 조회해야 한다 — 분류별 메서드를 타면 '전체' 가 아니게 된다
+        verify(postRepository, never())
+                .findByStatusAndCategoryOrderByPublishedAtDesc(any(), any(), any(Pageable.class));
+    }
+
+    @Test
+    void getPostsWithCategoryFiltersByThatCategory() {
+        when(postRepository.findByStatusAndCategoryOrderByPublishedAtDesc(
+                eq(PostStatus.PUBLISHED), eq(PostCategory.UPDATE), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(publishedPost())));
+
+        var response = postService.getPosts(PostCategory.UPDATE, 0, 20);
+
+        assertThat(response.getContent()).hasSize(1);
+        // 게시 상태 조건은 분류 필터가 걸려도 유지돼야 한다 (초안이 새면 안 됨)
+        verify(postRepository).findByStatusAndCategoryOrderByPublishedAtDesc(
+                eq(PostStatus.PUBLISHED), eq(PostCategory.UPDATE), any(Pageable.class));
+    }
+
+    @Test
+    void getPostsExposesCategoryInSummary() {
+        when(postRepository.findByStatusOrderByPublishedAtDesc(eq(PostStatus.PUBLISHED), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(
+                        Post.create("제목", "내용", PostCategory.NOTE, PostStatus.PUBLISHED, null))));
+
+        var response = postService.getPosts(null, 0, 20);
+
+        assertThat(response.getContent().get(0).getCategory()).isEqualTo("NOTE");
     }
 
     @Test
@@ -51,7 +95,7 @@ class PostServiceTest {
 
     @Test
     void getPostRejectsUnpublishedPost() {
-        Post draft = Post.create("제목", "내용", PostStatus.DRAFT, null);
+        Post draft = Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.DRAFT, null);
         when(postRepository.findById(1L)).thenReturn(Optional.of(draft));
 
         assertThatThrownBy(() -> postService.getPost(1L, IP_HASH))
@@ -62,7 +106,7 @@ class PostServiceTest {
 
     @Test
     void reactRejectsUnpublishedPost() {
-        Post draft = Post.create("제목", "내용", PostStatus.DRAFT, null);
+        Post draft = Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.DRAFT, null);
         when(postRepository.findWithLockById(1L)).thenReturn(Optional.of(draft));
 
         assertThatThrownBy(() -> postService.react(1L, ReactionType.LIKE, IP_HASH, "voter"))

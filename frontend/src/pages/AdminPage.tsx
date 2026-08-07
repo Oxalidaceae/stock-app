@@ -15,7 +15,13 @@ import type {
   UpdateBriefingEditorialRequest,
 } from '../types/api'
 
-// 빈 문자열 = 전체. 관세청은 신규 수집이 멈췄지만 아카이브 편집을 위해 남긴다.
+/*
+ * 빈 문자열 = 전체.
+ *
+ * 공개 화면(NewsPage)에서는 관세청 칩을 뺐지만 여기에는 남긴다 — 아카이브 67건도
+ * 여전히 큐레이션 대상이라 편집자가 골라낼 수단이 필요하다. 지면에 "계속 갱신되는
+ * 출처" 로 보이지 않게 하는 것과, 편집 도구에서 찾을 수 있게 하는 것은 별개다.
+ */
 const MINISTRIES = ['', '재정경제부', '금융위원회', '관세청']
 const STATUSES: { value: EditorialStatus | ''; label: string }[] = [
   { value: '', label: '전체 상태' },
