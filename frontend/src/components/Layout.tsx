@@ -30,7 +30,7 @@ function Footer() {
         본 사이트의 정보는 투자 참고용이며 투자 권유가 아닙니다. 투자 판단의 책임은 이용자 본인에게 있습니다.
       </div>
       <div style={{ marginTop: 4 }}>
-        데이터 출처: 금융감독원 DART · 한국은행 ECOS · FinanceDataReader · 대한민국 정책브리핑(공공누리)
+        데이터 출처: 금융감독원 DART · 한국은행 ECOS · FinanceDataReader · 재정경제부·금융위원회 보도자료
       </div>
       <div style={{ marginTop: 8, display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
         <span>© {new Date().getFullYear()} Jipyo (지표). All rights reserved.</span>

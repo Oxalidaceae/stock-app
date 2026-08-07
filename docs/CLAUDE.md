@@ -3,7 +3,7 @@
 ## 프로젝트 개요
 
 대한민국 상장 기업의 투자 정보를 종합적으로 제공하는 블룸버그 터미널 스타일의 웹 서비스.
-주가, DART 공시/재무제표, 한국은행 경제지표·거시 100대 통계지표, 경제 소식(정책브리핑),
+주가, DART 공시/재무제표, 한국은행 경제지표·거시 100대 통계지표, 경제 소식(부처 보도자료),
 종목 스크리너에 더해 관리자가 작성하는 투자 가이드(마크다운)와 게시판(로그인 없는 따봉/비추)을 제공한다.
 
 ---
@@ -34,7 +34,7 @@ stock_app/
 │       │   ├── financial/    # 재무제표·재무지표
 │       │   ├── economic/     # 경제지표 (ECOS)
 │       │   ├── macro/        # 거시 100대 통계지표
-│       │   ├── briefing/     # 정책브리핑 (경제 소식) + 관리자 편집
+│       │   ├── briefing/     # 부처 보도자료 (경제 소식) + 관리자 편집
 │       │   ├── screener/     # 종목 스크리너
 │       │   ├── guide/        # 투자 가이드 (관리자 작성, 마크다운)
 │       │   ├── post/         # 게시판 + 따봉/비추 (IP 기준 중복방지·레이트리밋)
@@ -58,7 +58,7 @@ stock_app/
 │   ├── dart/                 # DART 공시/재무제표 수집
 │   ├── ecos/                 # 한국은행 경제지표 + 100대 통계지표 수집
 │   ├── market/               # 주가/재무지표 수집 (FinanceDataReader)
-│   ├── rss/                  # 정책브리핑 RSS (경제 소식) 수집
+│   ├── rss/                  # 부처 보도자료 RSS (경제 소식) 수집
 │   ├── db/                   # DB 연결·세션
 │   ├── scripts/              # 진단 스크립트 (probe_*.py)
 │   ├── config.py             # 환경변수 설정
@@ -73,7 +73,7 @@ stock_app/
 ## 데이터 흐름
 
 ```
-[DART API] [ECOS API] [FinanceDataReader] [정책브리핑 RSS]
+[DART API] [ECOS API] [FinanceDataReader] [부처 보도자료 RSS]
       ↓          ↓             ↓                 ↓
   [ Python Collector — 주기적 수집/저장 ]
              ↓
@@ -87,7 +87,8 @@ stock_app/
 - **주가**: FinanceDataReader → PostgreSQL → Spring API 응답
 - **공시**: DART API → PostgreSQL → Spring API 응답
 - **경제지표**: ECOS API → PostgreSQL → Spring API 응답
-- **경제 소식**: 정책브리핑 RSS → PostgreSQL → Spring API 응답
+- **경제 소식**: 부처 보도자료 RSS → PostgreSQL → Spring API 응답
+  (정책브리핑 통합 RSS 는 2026-07-01 폐지 — collector/config.py 주석 참조)
 
 > Redis 는 제거됨(직렬화 이슈로 비활성 상태였고 메모리만 점유). 캐싱은 `NoOpCacheManager`로 무동작이라 모든 조회는 PostgreSQL 직접 조회. 조회 캐시는 HTTP `Cache-Control`/`ETag`(`CacheControlInterceptor`) + Cloudflare 엣지가 흡수한다.
 
@@ -151,7 +152,7 @@ JWT_SECRET=...
 | 재무제표 (연/분기) | ✅ 구현 | collector/dart + Spring(financial) |
 | 한국은행 경제지표 | ✅ 구현 | collector/ecos + Spring(economic) |
 | 거시 100대 통계지표 | ✅ 구현 | collector/ecos + Spring(macro) |
-| 경제 소식 (정책브리핑) | ✅ 구현 | collector/rss + Spring(briefing) |
+| 경제 소식 (부처 보도자료) | ✅ 구현 | collector/rss + Spring(briefing) |
 | 종목 스크리너 | ✅ 구현 | Spring(screener) + React |
 | 종목 비교 | ✅ 구현 | Spring(financial) + React(ComparePage) |
 | 자체 로그인 (JWT 쿠키) + 관리자 화면 | ✅ 구현 | Spring(auth/user) + React(AdminPage) |
@@ -225,7 +226,7 @@ Flyway가 Spring Boot 시작 시 자동 실행.
 | `economic_indicators` | 한국은행 ECOS 경제지표 |
 | `macro_keystats` | 거시 100대 통계지표 (매시간 갱신) |
 | `macro_keystat_history` | 100대 통계지표 이력 |
-| `policy_briefing` | 정책브리핑 RSS (경제 소식) + 관리자 편집 상태(editor_note 등) |
+| `policy_briefing` | 부처 보도자료 RSS (경제 소식) + 관리자 편집 상태(editor_note 등) |
 | `sync_status` | 데이터 수집 상태 추적 |
 | `app_users` | 로그인 사용자 (V7, ADMIN/USER — AdminAccountInitializer 가 초기 관리자 시드) |
 | `post` | 게시판 글 (V8, like/dislike 집계 포함) |

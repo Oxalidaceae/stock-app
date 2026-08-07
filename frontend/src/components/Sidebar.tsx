@@ -87,7 +87,7 @@ export function Sidebar({ open = false, onNavigate }: SidebarProps) {
         <div>경제지표: 한국은행 ECOS</div>
         <div>공시/재무: 금융감독원 DART</div>
         <div>주가: FinanceDataReader</div>
-        <div>경제 소식: 정책브리핑(공공누리)</div>
+        <div>경제 소식: 재정경제부·금융위원회 보도자료</div>
       </div>
     </aside>
   )
