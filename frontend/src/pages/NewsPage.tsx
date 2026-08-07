@@ -5,13 +5,14 @@ import { ErrorFallback } from '../components/ErrorFallback'
 import type { PolicyBriefing, BriefingDate } from '../types/api'
 
 /*
- * 부처 필터.
+ * 부처 필터 — 현재 수집 중인 출처만 노출한다 (collector POLICY_BRIEFING_FEEDS 와 일치).
  *
- * 재정경제부·금융위원회는 현재 수집 중 (collector POLICY_BRIEFING_FEEDS 와 일치).
- * 관세청은 정책브리핑 RSS 폐지 후 대체 피드를 찾지 못해 신규 수집이 멈췄지만,
- * 2026-07-02 까지 쌓인 아카이브가 있어 필터에는 남겨 둔다.
+ * 관세청은 정책브리핑 RSS 폐지 후 대체 피드를 찾지 못해 2026-07-02 로 신규 수집이
+ * 멈췄다. 아카이브 67건은 '전체' 목록에 그대로 남지만, 눌러도 영영 늘지 않는 칩을
+ * 두는 것보다 빼는 쪽을 택했다. 관세청 RSS 를 다시 찾으면 여기와 컬렉터 설정에
+ * 함께 되살릴 것.
  */
-const MINISTRIES = ['전체', '재정경제부', '금융위원회', '관세청']
+const MINISTRIES = ['전체', '재정경제부', '금융위원회']
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 function fmtDateTime(iso: string | null): string {
