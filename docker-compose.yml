@@ -112,6 +112,10 @@ services:
       DB_NAME: ${DB_NAME:-stockapp}
       DB_USERNAME: ${DB_USERNAME:-stockapp}
       DB_PASSWORD: ${DB_PASSWORD:-stockapp}
+      # 수집 연속 실패 시 알림 (비워두면 알림 없음). CHAT_ID 는 텔레그램에서만 필요.
+      COLLECTOR_ALERT_WEBHOOK: ${COLLECTOR_ALERT_WEBHOOK:-}
+      COLLECTOR_ALERT_CHAT_ID: ${COLLECTOR_ALERT_CHAT_ID:-}
+      COLLECTOR_ALERT_THRESHOLD: ${COLLECTOR_ALERT_THRESHOLD:-3}
     depends_on:
       postgres:
         condition: service_healthy
@@ -136,6 +140,10 @@ services:
       DB_NAME: ${DB_NAME:-stockapp}
       DB_USERNAME: ${DB_USERNAME:-stockapp}
       DB_PASSWORD: ${DB_PASSWORD:-stockapp}
+      # 수집 연속 실패 시 알림 (비워두면 알림 없음). CHAT_ID 는 텔레그램에서만 필요.
+      COLLECTOR_ALERT_WEBHOOK: ${COLLECTOR_ALERT_WEBHOOK:-}
+      COLLECTOR_ALERT_CHAT_ID: ${COLLECTOR_ALERT_CHAT_ID:-}
+      COLLECTOR_ALERT_THRESHOLD: ${COLLECTOR_ALERT_THRESHOLD:-3}
     depends_on:
       postgres:
         condition: service_healthy

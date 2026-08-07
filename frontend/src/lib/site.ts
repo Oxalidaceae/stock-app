@@ -14,7 +14,17 @@ export const SITE_NAME = 'Jipyo (지표)'
 export const SITE_ORIGIN = 'https://jipyo.net'
 export const CONTACT_EMAIL = 'jipyopage@gmail.com'
 
-/** 가이드 아티클에 저자가 지정되지 않았을 때 표시할 편집 주체. */
+/**
+ * 가이드 아티클의 바이라인에 표시할 편집 주체.
+ *
+ * 의도적으로 API 의 `authorName`(= 글을 쓴 AppUser 의 username)을 쓰지 않는다.
+ * 관리자 화면에서 발행하면 로그인 계정 아이디가 그대로 지면에 노출되기 때문
+ * ("작성 admin"). 지금은 저자가 실질적으로 한 명이라 편집 주체 표기가 사실과
+ * 어긋나지 않고, 운영자 실명 공개는 소개 페이지의 OPERATOR_NAME 이 담당한다.
+ *
+ * 글마다 다른 저자를 세우려면 AppUser 에 표시 이름 컬럼을 추가하고 그 값을
+ * 쓰도록 바꿀 것 (username 을 그대로 노출하는 방식으로 되돌리지 말 것).
+ */
 export const EDITORIAL_NAME = 'Jipyo 편집팀'
 
 /** 편집 방침 섹션 앵커 (가이드 글 하단에서 링크). */

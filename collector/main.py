@@ -56,7 +56,7 @@ def run_initial_setup():
     # 6. 전종목 최신 주가 (직전 영업일)
     sync_daily_prices()
 
-    # 7. 정책브리핑 경제 소식 (RSS — 기재부·금융위·관세청)
+    # 7. 경제 소식 (부처 보도자료 RSS — 재정경제부·금융위)
     sync_policy_briefings()
 
     logger.info("=== 초기 데이터 적재 완료 ===")
@@ -97,13 +97,20 @@ def main():
     parser.add_argument("--daily",     action="store_true", help="일별 갱신 즉시 실행")
     parser.add_argument("--weekly",    action="store_true", help="주간 재무제표 즉시 실행")
     parser.add_argument("--ecos",      action="store_true", help="경제지표만 즉시 실행")
-    parser.add_argument("--rss",       action="store_true", help="경제 소식(정책브리핑 RSS) 즉시 실행")
+    parser.add_argument("--rss",       action="store_true", help="경제 소식(부처 보도자료 RSS) 즉시 실행")
     parser.add_argument("--backfill",  action="store_true", help="특정 종목 과거 주가 백필")
     parser.add_argument("--ticker",    type=str, help="백필 대상 종목코드 (예: 005930)")
     parser.add_argument("--start",     type=str, default="2020-01-01", help="백필 시작일 (YYYY-MM-DD)")
     parser.add_argument("--end",       type=str, default=str(date.today()), help="백필 종료일")
     parser.add_argument("--daemon",    action="store_true", help="스케줄러 데몬 실행")
+    parser.add_argument("--test-alert", action="store_true", help="알림 웹훅 설정 확인 (테스트 메시지 1건 발송)")
     args = parser.parse_args()
+
+    # DB 도 API 키도 필요 없다 — 알림 경로만 확인하므로 가장 먼저 처리한다.
+    if args.test_alert:
+        from db.sync_status import send_test_alert
+        send_test_alert()
+        return
 
     if args.init:
         run_initial_setup()

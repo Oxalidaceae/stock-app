@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePosts } from '../hooks/usePosts'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { EDITORIAL_NAME } from '../lib/site'
 import { PageIntro } from '../components/PageIntro'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
@@ -68,7 +69,8 @@ export default function BoardPage() {
                   </div>
                   <div style={{ display: 'flex', gap: 12, fontSize: '0.7rem', color: 'var(--text-muted)', alignItems: 'center' }}>
                     <span>{fmtDate(p.publishedAt)}</span>
-                    {p.authorName && <span>· {p.authorName}</span>}
+                    {/* authorName(계정 username) 대신 편집 주체 고정 — 사유는 lib/site.ts 참고 */}
+                    <span>· {EDITORIAL_NAME}</span>
                     <span style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
                       <span>👍 {p.likeCount}</span>
                       <span>👎 {p.dislikeCount}</span>

@@ -4,8 +4,14 @@ import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorFallback } from '../components/ErrorFallback'
 import type { PolicyBriefing, BriefingDate } from '../types/api'
 
-// 수집 대상 부처 (collector POLICY_BRIEFING_FEEDS 와 일치)
-const MINISTRIES = ['전체', '기획재정부', '금융위원회', '관세청']
+/*
+ * 부처 필터.
+ *
+ * 재정경제부·금융위원회는 현재 수집 중 (collector POLICY_BRIEFING_FEEDS 와 일치).
+ * 관세청은 정책브리핑 RSS 폐지 후 대체 피드를 찾지 못해 신규 수집이 멈췄지만,
+ * 2026-07-02 까지 쌓인 아카이브가 있어 필터에는 남겨 둔다.
+ */
+const MINISTRIES = ['전체', '재정경제부', '금융위원회', '관세청']
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 function fmtDateTime(iso: string | null): string {
@@ -82,10 +88,12 @@ function BriefingArticle({ b }: { b: PolicyBriefing }) {
           {b.title}
         </div>
         {/*
-         * RSS 원문 발췌(b.summary)는 노출하지 않는다. 정책브리핑 피드의 요약문을
-         * 그대로 재게시하면 Google 게시자 정책상 "copied content without added value"
-         * (scraped content)에 해당하기 때문. 제목·부처·발행일·원문 링크는 출처 표기이며,
-         * 실질 콘텐츠는 아래 Jipyo 자체 큐레이션(editorNote)이 담당한다.
+         * RSS 원문 발췌는 노출하지 않는다. 부처 피드의 요약문을 그대로 재게시하면
+         * Google 게시자 정책상 "copied content without added value"(scraped content)에
+         * 해당하고, 기관에 따라 무단 복제·배포를 금지하기도 한다. 그래서 공개 API
+         * 응답에서도 아예 빼 두었다(PolicyBriefingResponse 주석 참조).
+         * 제목·부처·발행일·원문 링크는 출처 표기이며, 실질 콘텐츠는 아래 Jipyo 자체
+         * 큐레이션(editorNote)이 담당한다.
          */}
       </a>
 
@@ -130,7 +138,7 @@ export default function NewsPage() {
   const [ministry, setMinistry] = useState('전체')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)  // null = 전체(최근순)
   /*
-   * 기본값 = Jipyo 요약만. 전체 목록은 정책브리핑 RSS 의 제목·링크 모음이라
+   * 기본값 = Jipyo 요약만. 전체 목록은 부처 보도자료 RSS 의 제목·링크 모음이라
    * 그 자체로는 원본 콘텐츠가 아니고(Google 게시자 정책상 scraped content),
    * 크롤러는 JS 상태를 바꿀 수 없으므로 색인되는 /news 는 이 큐레이션 뷰가 된다.
    * 전체 목록은 사용자가 버튼으로 펼쳐 볼 수 있게 그대로 남긴다.
@@ -198,7 +206,7 @@ export default function NewsPage() {
       <div className="page-header">
         <h1 className="page-title">경제 소식</h1>
         <p className="page-subtitle">
-          기획재정부·금융위원회·관세청 정책 발표 가운데 투자자가 알아 둘 만한 건을 골라
+          재정경제부·금융위원회 보도자료 가운데 투자자가 알아 둘 만한 건을 골라
           Jipyo가 직접 요약하고, 관련 지표를 함께 표시합니다.
         </p>
       </div>
@@ -224,7 +232,7 @@ export default function NewsPage() {
             )
           })}
           <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-            출처: 대한민국 정책브리핑 (공공누리 제1유형)
+            출처: 각 부처 보도자료 (출처 표시 · 원문 링크)
           </span>
         </div>
       </div>

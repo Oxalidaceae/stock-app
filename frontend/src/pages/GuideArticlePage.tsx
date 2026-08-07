@@ -25,6 +25,12 @@ export default function GuideArticlePage() {
   if (isLoading) return <LoadingSpinner message="가이드 로딩 중..." />
   if (error || !guide) return <NotFoundPage />
 
+  // 게시일과 수정일은 '표시되는 날짜'로 비교한다. 원본은 LocalDateTime 이라
+  // 같은 날 저장돼도 마이크로초가 달라, 문자열로 비교하면 항상 서로 다른 값으로
+  // 판정돼 같은 날짜가 "게시 · 업데이트" 로 두 번 찍힌다.
+  const publishedText = fmtDate(guide.publishedAt)
+  const updatedText = fmtDate(guide.updatedAt)
+
   return (
     <>
       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
@@ -44,18 +50,16 @@ export default function GuideArticlePage() {
 
       <article className="card" style={{ padding: 'var(--space-xl)', maxWidth: 860 }}>
         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 'var(--space-lg)' }}>
-          작성 {guide.authorName || EDITORIAL_NAME}
-          {guide.publishedAt && <> · 게시 {fmtDate(guide.publishedAt)}</>}
-          {guide.updatedAt && guide.updatedAt !== guide.publishedAt && (
-            <> · 업데이트 {fmtDate(guide.updatedAt)}</>
-          )}
+          작성 {EDITORIAL_NAME}
+          {publishedText && <> · 게시 {publishedText}</>}
+          {updatedText && updatedText !== publishedText && <> · 업데이트 {updatedText}</>}
         </div>
 
         <Markdown>{guide.content}</Markdown>
       </article>
 
       <p style={{ maxWidth: 860, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.7, marginTop: 'var(--space-lg)' }}>
-        이 글은 {guide.authorName || EDITORIAL_NAME}이 직접 작성했습니다.{' '}
+        이 글은 {EDITORIAL_NAME}이 직접 작성했습니다.{' '}
         <Link to={EDITORIAL_ANCHOR} style={{ color: 'var(--text-secondary)' }}>
           편집 방침 보기
         </Link>

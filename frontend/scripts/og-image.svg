@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  공유 미리보기(Open Graph / Twitter Card) 이미지 원본.
+
+  이 SVG 자체는 배포되지 않는다. 카카오톡·X·페이스북·Slack 등은 SVG 를 미리보기로
+  받지 않으므로, 아래 명령으로 PNG 를 구워 public/og-image.png 로 넣고 index.html 의
+  og:image 가 그 PNG 를 가리킨다.
+
+    rsvg-convert -w 1200 -h 630 scripts/og-image.svg -o public/og-image.png
+
+  (rsvg-convert = brew install librsvg. 빌드 파이프라인에 넣지 않는다 — 이미지가
+   바뀔 일이 드물고, Docker 빌드에 변환 도구 의존성을 추가할 이유가 없다.)
+
+  크기 1200x630 은 Open Graph 권장 비율(1.91:1)이며 대부분의 플랫폼이 이 규격을 쓴다.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <!-- 사이트 배경(bg-primary, #0a0a0f)에 좌상단 오렌지 광원 -->
+    <radialGradient id="glow" cx="0.18" cy="0.12" r="0.9">
+      <stop offset="0%"   stop-color="#ff6600" stop-opacity="0.20"/>
+      <stop offset="45%"  stop-color="#ff6600" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="barFade" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#ff6600" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#ff6600" stop-opacity="0.06"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0a0a0f"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- 우측 장식: 상승하는 지표 막대 -->
+  <g>
+    <rect x="742"  y="424" width="46" height="126" rx="8" fill="url(#barFade)"/>
+    <rect x="810"  y="380" width="46" height="170" rx="8" fill="url(#barFade)"/>
+    <rect x="878"  y="316" width="46" height="234" rx="8" fill="url(#barFade)"/>
+    <rect x="946"  y="262" width="46" height="288" rx="8" fill="url(#barFade)"/>
+    <rect x="1014" y="196" width="46" height="354" rx="8" fill="url(#barFade)"/>
+    <polyline points="765,424 833,380 901,316 969,262 1037,196"
+              fill="none" stroke="#ff6600" stroke-opacity="0.55"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1037" cy="196" r="11" fill="#0a0a0f"/>
+    <circle cx="1037" cy="196" r="7.5" fill="#4fc3f7"/>
+  </g>
+
+  <!-- 로고 마크 (public/favicon.svg 와 동일 도형, 4배 확대) -->
+  <g transform="translate(96, 150) scale(4)">
+    <rect x="1" y="1" width="30" height="30" rx="7" fill="#12121a" stroke="#ff660055" stroke-width="1"/>
+    <line x1="6" y1="25.5" x2="27.6" y2="25.5" stroke="#ff660033" stroke-width="1" stroke-linecap="round"/>
+    <rect x="6"  y="18" width="3.6" height="7"  rx="1.2" fill="#ff6600"/>
+    <rect x="12" y="15" width="3.6" height="10" rx="1.2" fill="#ff6600"/>
+    <rect x="18" y="12" width="3.6" height="13" rx="1.2" fill="#ff6600"/>
+    <rect x="24" y="9"  width="3.6" height="16" rx="1.2" fill="#ff6600"/>
+    <circle cx="25.8" cy="9" r="3" fill="#12121a"/>
+    <circle cx="25.8" cy="9" r="2.2" fill="#4fc3f7"/>
+  </g>
+
+  <text x="248" y="222" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="86" font-weight="700" letter-spacing="6" fill="#e0e0e0">JIPYO</text>
+  <text x="536" y="222" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif"
+        font-size="44" font-weight="500" fill="#8b8fa3">지표</text>
+
+  <text x="96" y="360" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif"
+        font-size="46" font-weight="600" fill="#e0e0e0">한국 주식 · 공시 · 거시지표</text>
+  <!-- 우측 막대 장식이 x=742 에서 시작하므로 부제는 그 앞에서 끝나도록 짧게 유지한다. -->
+  <text x="96" y="424" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif"
+        font-size="30" font-weight="400" fill="#8b8fa3">DART 공시 · 재무제표 · 한국은행 통계</text>
+
+  <line x1="96" y1="486" x2="640" y2="486" stroke="#ff6600" stroke-opacity="0.25" stroke-width="2"/>
+  <text x="96" y="536" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="30" font-weight="600" letter-spacing="1" fill="#ff6600">jipyo.net</text>
+</svg>

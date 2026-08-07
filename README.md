@@ -15,7 +15,7 @@ DART 공시·재무제표, 한국은행 경제지표, KOSPI/KOSDAQ 주가를 한
 - **재무제표** — 분기·연간 데이터에서 PER/PBR/PSR/ROE/ROA 등 자동 계산
 - **경제지표** — 한국은행 기준금리·실질 GDP·CPI·원달러 환율·M2·경상수지 (10년치)
 - **거시 100대 통계지표** — 한국은행 주요 통계 100선 (매시간 갱신)
-- **경제 소식** — 정책브리핑 RSS 기반 경제 뉴스 (3시간마다 갱신)
+- **경제 소식** — 부처 보도자료 RSS 기반 경제 뉴스 (3시간마다 갱신)
 - **종목 스크리너** — 재무지표·시장·시총 조건 기반 필터링
 - **경제 소식 편집** — 관리자가 RSS 기사를 선별하고 자체 요약을 작성한 뒤 공개
 - **투자 가이드** — 재무지표·공시·거시경제 해설 아티클, 관리자가 마크다운으로 작성·편집
@@ -49,7 +49,7 @@ stock_app/
 │   ├── dart/            # DART OpenAPI 클라이언트
 │   ├── ecos/            # 한국은행 ECOS (경제지표 + 100대 통계지표)
 │   ├── market/          # 주가·재무지표 (FinanceDataReader)
-│   ├── rss/             # 정책브리핑 RSS (경제 소식)
+│   ├── rss/             # 부처 보도자료 RSS (경제 소식)
 │   ├── db/              # DB 연결·세션
 │   └── scripts/         # 진단 스크립트 (probe_*.py)
 ├── scripts/             # 운영 스크립트 — DB 자동 백업 루프·수동 백업·복구
@@ -60,7 +60,7 @@ stock_app/
 ### 데이터 흐름
 
 ```
-[DART]   [ECOS]   [FinanceDataReader (KRX)]   [정책브리핑 RSS]
+[DART]   [ECOS]   [FinanceDataReader (KRX)]   [부처 보도자료 RSS]
    ↓        ↓              ↓                        ↓
    [ Python Collector — 매시간 스태거(공시·경제지표·재무지표·100대지표·경제소식) · 주가 장마감후 16:00 · 재무제표 원본 일 02:00 ]
               ↓
@@ -141,9 +141,10 @@ docker-compose run --rm collector-daemon <옵션>
 | `--daily` | 일별 주가 + 공시 + 경제지표 갱신 |
 | `--weekly` | 분기/연간 재무제표 배치 + 재무지표 계산 (~30분) |
 | `--ecos` | 경제지표만 갱신 |
-| `--rss` | 경제 소식(정책브리핑 RSS) 갱신 |
+| `--rss` | 경제 소식(부처 보도자료 RSS) 갱신 |
 | `--backfill --ticker 005930 --start 2020-01-01` | 특정 종목 과거 주가 백필 |
 | `--daemon` | 스케줄러 (매시간 스태거: :00 공시·:20 경제지표·:30 재무지표·:40 100대지표·:50 경제소식 / 주가 16:00 / 재무제표 원본 일 02:00 `--weekly`) |
+| `--test-alert` | 수집 실패 알림 웹훅 설정 확인 (테스트 메시지 1건 발송) |
 
 ### 진단 스크립트 (`collector/scripts/`)
 
@@ -183,7 +184,7 @@ Flyway로 버전 관리. 마이그레이션 파일: `backend/src/main/resources/
 | `financial_metrics` | PER·PBR·ROE 등 계산 지표 (스크리너용) |
 | `economic_indicators` | 한국은행 ECOS 시계열 |
 | `macro_keystats` | 거시 100대 통계지표 (매시간 갱신) |
-| `policy_briefing` | 정책브리핑 RSS (경제 소식) |
+| `policy_briefing` | 부처 보도자료 RSS (경제 소식) |
 | `sync_status` | 데이터 수집 상태 추적 |
 
 ---

@@ -19,7 +19,10 @@ const ORIGIN = 'https://jipyo.net'
 const API_ORIGIN = process.env.PRERENDER_API_ORIGIN || ORIGIN
 const SITE_NAME = 'Jipyo (지표)'
 const SUFFIX = ` | ${SITE_NAME}`
-/** 저자 미지정 아티클의 편집 주체. src/lib/site.ts 의 EDITORIAL_NAME 과 같은 값. */
+/**
+ * 아티클 바이라인의 편집 주체. src/lib/site.ts 의 EDITORIAL_NAME 과 같은 값.
+ * API 의 authorName(= 계정 username)은 지면에 쓰지 않는다 — 사유는 site.ts 주석 참고.
+ */
 const EDITORIAL_NAME = 'Jipyo 편집팀'
 
 // 경로별 메타. '/' 는 dist/index.html 을 덮어쓴다.
@@ -56,7 +59,7 @@ const ROUTES = [
     title: `경제 소식 — 정책 발표 Jipyo 요약${SUFFIX}`,
     heading: '경제 소식',
     description:
-      '기획재정부·금융위원회·관세청의 정책 발표 가운데 투자자가 알아 둘 만한 건을 골라 Jipyo가 직접 요약하고, 관련 지표를 함께 표시합니다.',
+      '재정경제부·금융위원회 보도자료 가운데 투자자가 알아 둘 만한 건을 골라 Jipyo가 직접 요약하고, 관련 지표를 함께 표시합니다.',
   },
   {
     path: '/screener',
@@ -175,7 +178,7 @@ const articleJsonLd = (guide, url, description) => ({
   mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   author: {
     '@type': 'Organization',
-    name: guide.authorName || EDITORIAL_NAME,
+    name: EDITORIAL_NAME,
     url: `${ORIGIN}/about#editorial`,
   },
   publisher: PUBLISHER,
@@ -427,7 +430,7 @@ for (const guide of guides) {
   const description = clamp(guide.summary || guide.content)
   const url = `${ORIGIN}/guide/${guide.slug}`
   const byline =
-    `<p style="${S.byline}">작성 ${escText(guide.authorName || EDITORIAL_NAME)}` +
+    `<p style="${S.byline}">작성 ${escText(EDITORIAL_NAME)}` +
     (isoDate(guide.publishedAt) ? ` · 게시 ${isoDate(guide.publishedAt)}` : '') +
     '</p>'
   write(

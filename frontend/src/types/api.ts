@@ -126,6 +126,8 @@ export interface SyncStatus {
   records: number | null
   durationMs: number | null
   message: string | null
+  /** 연속 실패 횟수 (0 = 마지막 실행 성공) */
+  consecutiveFailures: number
 }
 
 /* ── Macro Keystats ───────────────────────────────────── */
@@ -145,10 +147,11 @@ export interface MacroKeystat {
 
 /* ── Policy Briefing (경제 소식) ───────────────────────── */
 
+// 원문 요약(summary)은 공개 응답에 담기지 않는다 — PolicyBriefingResponse 주석 참조.
+// 편집자용 원문 요약은 AdminBriefing 쪽에 있다.
 export interface PolicyBriefing {
   id: number
   title: string
-  summary: string | null
   ministry: string | null
   source: string | null
   link: string
@@ -175,6 +178,11 @@ export interface AuthUser {
 export type EditorialStatus = 'COLLECTED' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 
 export interface AdminPolicyBriefing extends PolicyBriefing {
+  /**
+   * 원문 요약 — 관리자 응답에만 있다. 편집자가 큐레이션을 쓸 때 원문 맥락을
+   * 보기 위한 것이며, 공개 응답(PolicyBriefing)에는 담기지 않는다.
+   */
+  summary: string | null
   collectedAt: string | null
   editorialStatus: EditorialStatus
   reviewedBy: string | null

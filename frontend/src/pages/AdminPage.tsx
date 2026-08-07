@@ -15,7 +15,8 @@ import type {
   UpdateBriefingEditorialRequest,
 } from '../types/api'
 
-const MINISTRIES = ['', '기획재정부', '금융위원회', '관세청']
+// 빈 문자열 = 전체. 관세청은 신규 수집이 멈췄지만 아카이브 편집을 위해 남긴다.
+const MINISTRIES = ['', '재정경제부', '금융위원회', '관세청']
 const STATUSES: { value: EditorialStatus | ''; label: string }[] = [
   { value: '', label: '전체 상태' },
   { value: 'COLLECTED', label: '수집됨' },
@@ -126,7 +127,7 @@ function BriefingEditor({
         </div>
         <h2 style={{ fontSize: '1.05rem', lineHeight: 1.6, marginBottom: 8 }}>{briefing.title}</h2>
         <a href={briefing.link} target="_blank" rel="noopener noreferrer">
-          정책브리핑 원문 열기 →
+          보도자료 원문 열기 →
         </a>
       </div>
 

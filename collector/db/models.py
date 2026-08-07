@@ -147,7 +147,7 @@ class MacroKeystatHistory(Base):
 
 
 class PolicyBriefing(Base):
-    """정책브리핑(korea.kr) 부처별 RSS — "경제 소식". link 기준 중복 제거."""
+    """부처 보도자료 RSS — "경제 소식". link 기준 중복 제거."""
     __tablename__ = "policy_briefing"
 
     id           = Column(BigInteger, primary_key=True, autoincrement=True)
