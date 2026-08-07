@@ -14,6 +14,7 @@ public class PostResponse {
 
     private final Long id;
     private final String title;
+    private final String category;
     private final String content;
     private final int likeCount;
     private final int dislikeCount;
@@ -26,6 +27,7 @@ public class PostResponse {
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
+                post.getCategory().name(),
                 post.getContent(),
                 post.getLikeCount(),
                 post.getDislikeCount(),

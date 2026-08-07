@@ -4,6 +4,7 @@ import { usePost, useReactToPost } from '../hooks/usePosts'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { getVoterId } from '../lib/voterId'
 import { EDITORIAL_NAME } from '../lib/site'
+import { categoryLabel } from '../lib/postCategory'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import NotFoundPage from './NotFoundPage'
 import type { ReactionType } from '../types/api'
@@ -85,7 +86,10 @@ export default function BoardPostPage() {
 
       <div className="page-header">
         <h1 className="page-title" style={{ lineHeight: 1.4 }}>{post.title}</h1>
-        <p className="page-subtitle" style={{ display: 'flex', gap: 10 }}>
+        <p className="page-subtitle" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span className="badge" style={{ color: 'var(--accent-orange)', borderColor: 'var(--accent-orange-dim)' }}>
+            {categoryLabel(post.category)}
+          </span>
           <span>{fmtDateTime(post.publishedAt)}</span>
           {/* authorName(계정 username) 대신 편집 주체 고정 — 사유는 lib/site.ts 참고 */}
           <span>· {EDITORIAL_NAME}</span>

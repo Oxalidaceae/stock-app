@@ -28,6 +28,10 @@ public class Post {
     @Column(nullable = false, length = 20)
     private PostStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PostCategory category;
+
     @Column(name = "like_count", nullable = false)
     private int likeCount;
 
@@ -47,10 +51,12 @@ public class Post {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static Post create(String title, String content, PostStatus status, AppUser author) {
+    public static Post create(String title, String content,
+                              PostCategory category, PostStatus status, AppUser author) {
         Post post = new Post();
         post.title = title.trim();
         post.content = content;
+        post.category = category;
         post.author = author;
         post.likeCount = 0;
         post.dislikeCount = 0;
@@ -61,9 +67,10 @@ public class Post {
         return post;
     }
 
-    public void update(String title, String content, PostStatus status) {
+    public void update(String title, String content, PostCategory category, PostStatus status) {
         this.title = title.trim();
         this.content = content;
+        this.category = category;
         this.updatedAt = LocalDateTime.now();
         applyStatus(status);
     }

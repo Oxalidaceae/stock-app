@@ -9,6 +9,7 @@ import com.stockapp.domain.post.dto.PostResponse;
 import com.stockapp.domain.post.dto.PostSummaryResponse;
 import com.stockapp.domain.post.dto.ReactionRequest;
 import com.stockapp.domain.post.dto.ReactionResponse;
+import com.stockapp.domain.post.entity.PostCategory;
 import com.stockapp.domain.post.service.PostService;
 import com.stockapp.domain.post.service.ReactionRateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,12 +29,13 @@ public class PostController {
     @Value("${app.reaction.ip-salt:jipyo-reaction}")
     private String ipSalt;
 
-    /** 게시판 목록 — 게시된 글만. */
+    /** 게시판 목록 — 게시된 글만. category 를 생략하면 전체 분류. */
     @GetMapping
     public ApiResponse<PageResponse<PostSummaryResponse>> getPosts(
+            @RequestParam(required = false) PostCategory category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(postService.getPosts(page, size));
+        return ApiResponse.success(postService.getPosts(category, page, size));
     }
 
     /** 게시글 상세 — 조회자 IP 로 현재 반응 상태를 판정해 함께 반환. */

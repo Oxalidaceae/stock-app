@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createPost, deletePost, getAdminPosts, updatePost } from '../api/endpoints'
-import type { PostRequest, PostStatus } from '../types/api'
+import type { PostCategory, PostRequest, PostStatus } from '../types/api'
 
-export const useAdminPosts = (status: PostStatus | '', page: number) =>
+export const useAdminPosts = (status: PostStatus | '', category: PostCategory | '', page: number) =>
   useQuery({
-    queryKey: ['admin', 'posts', status, page],
-    queryFn: () => getAdminPosts(status || undefined, page),
+    queryKey: ['admin', 'posts', status, category, page],
+    queryFn: () => getAdminPosts(status || undefined, category || undefined, page),
   })
 
 const useInvalidatePosts = () => {

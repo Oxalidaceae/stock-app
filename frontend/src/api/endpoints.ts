@@ -26,6 +26,7 @@ import type {
   AdminPost,
   PostRequest,
   PostStatus,
+  PostCategory,
   ReactionType,
   ReactionResult,
   GuideSummary,
@@ -194,9 +195,11 @@ export const screenStocks = (req: ScreenerRequest) =>
 
 /* ── Post (게시판) ────────────────────────── */
 
-export const getPosts = (page = 0, size = 20) =>
+export const getPosts = (page = 0, size = 20, category?: PostCategory) =>
   client
-    .get<ApiResponse<PageResponse<PostSummary>>>('/posts', { params: { page, size } })
+    .get<ApiResponse<PageResponse<PostSummary>>>('/posts', {
+      params: { category: category || undefined, page, size },
+    })
     .then((r) => r.data.data)
 
 export const getPost = (id: number, voterId?: string) =>
@@ -211,10 +214,10 @@ export const reactToPost = (id: number, type: ReactionType, voterId: string) =>
 
 /* ── Admin: Post ──────────────────────────── */
 
-export const getAdminPosts = (status?: PostStatus, page = 0, size = 20) =>
+export const getAdminPosts = (status?: PostStatus, category?: PostCategory, page = 0, size = 20) =>
   client
     .get<ApiResponse<PageResponse<AdminPost>>>('/admin/posts', {
-      params: { status: status || undefined, page, size },
+      params: { status: status || undefined, category: category || undefined, page, size },
     })
     .then((r) => r.data.data)
 

@@ -8,6 +8,7 @@ import com.stockapp.domain.post.dto.PostResponse;
 import com.stockapp.domain.post.dto.PostSummaryResponse;
 import com.stockapp.domain.post.dto.ReactionResponse;
 import com.stockapp.domain.post.entity.Post;
+import com.stockapp.domain.post.entity.PostCategory;
 import com.stockapp.domain.post.entity.PostReaction;
 import com.stockapp.domain.post.entity.PostStatus;
 import com.stockapp.domain.post.entity.ReactionType;
@@ -25,9 +26,13 @@ public class PostService {
     private final PostReactionRepository reactionRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<PostSummaryResponse> getPosts(int page, int size) {
-        var result = postRepository
-                .findByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED, Pagination.publicPage(page, size))
+    /** category 가 null 이면 전체 분류. */
+    public PageResponse<PostSummaryResponse> getPosts(PostCategory category, int page, int size) {
+        var pageable = Pagination.publicPage(page, size);
+        var result = (category == null
+                ? postRepository.findByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED, pageable)
+                : postRepository.findByStatusAndCategoryOrderByPublishedAtDesc(
+                        PostStatus.PUBLISHED, category, pageable))
                 .map(PostSummaryResponse::from);
         return PageResponse.from(result);
     }

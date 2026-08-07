@@ -8,7 +8,7 @@ class PostTest {
 
     @Test
     void createInitializesCountsAndDraftHasNoPublishedAt() {
-        Post post = Post.create("제목", "내용", PostStatus.DRAFT, null);
+        Post post = Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.DRAFT, null);
 
         assertThat(post.getLikeCount()).isZero();
         assertThat(post.getDislikeCount()).isZero();
@@ -18,20 +18,20 @@ class PostTest {
 
     @Test
     void publishedAtIsSetOnFirstPublishAndKeptAfterwards() {
-        Post post = Post.create("제목", "내용", PostStatus.PUBLISHED, null);
+        Post post = Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.PUBLISHED, null);
         var firstPublishedAt = post.getPublishedAt();
         assertThat(firstPublishedAt).isNotNull();
 
         // 임시저장으로 내렸다가 다시 게시해도 최초 게시 시각 유지
-        post.update("제목", "내용", PostStatus.DRAFT);
-        post.update("제목", "내용", PostStatus.PUBLISHED);
+        post.update("제목", "내용", PostCategory.NOTICE, PostStatus.DRAFT);
+        post.update("제목", "내용", PostCategory.NOTICE, PostStatus.PUBLISHED);
 
         assertThat(post.getPublishedAt()).isEqualTo(firstPublishedAt);
     }
 
     @Test
     void adjustCountsHandlesAddCancelAndSwitch() {
-        Post post = Post.create("제목", "내용", PostStatus.PUBLISHED, null);
+        Post post = Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.PUBLISHED, null);
 
         post.adjustCounts(null, ReactionType.LIKE);              // 신규 따봉
         assertThat(post.getLikeCount()).isEqualTo(1);
@@ -46,7 +46,7 @@ class PostTest {
 
     @Test
     void adjustCountsNeverGoesNegative() {
-        Post post = Post.create("제목", "내용", PostStatus.PUBLISHED, null);
+        Post post = Post.create("제목", "내용", PostCategory.NOTICE, PostStatus.PUBLISHED, null);
 
         // 집계가 0인 상태에서 감소가 들어와도 음수가 되지 않는다
         post.adjustCounts(ReactionType.LIKE, null);

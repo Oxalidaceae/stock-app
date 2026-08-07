@@ -1,5 +1,6 @@
 package com.stockapp.domain.post.dto;
 
+import com.stockapp.domain.post.entity.PostCategory;
 import com.stockapp.domain.post.entity.PostStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,9 @@ public class PostRequest {
     @NotBlank(message = "내용을 입력해주세요")
     @Size(max = 50000, message = "내용은 50,000자 이하여야 합니다")
     private String content;
+
+    @NotNull(message = "분류를 선택해주세요")
+    private PostCategory category;
 
     @NotNull(message = "게시 상태를 선택해주세요")
     private PostStatus status;

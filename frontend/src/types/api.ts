@@ -257,12 +257,15 @@ export interface ScreenerResult {
 /* ── Post (게시판) ───────────────────────────────────── */
 
 export type PostStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+/** 게시글 분류. 한글 라벨은 lib/postCategory.ts 참고. */
+export type PostCategory = 'NOTICE' | 'UPDATE' | 'NOTE'
 export type ReactionType = 'LIKE' | 'DISLIKE'
 
 /** 게시판 목록 항목. */
 export interface PostSummary {
   id: number
   title: string
+  category: PostCategory
   excerpt: string
   likeCount: number
   dislikeCount: number
@@ -274,6 +277,7 @@ export interface PostSummary {
 export interface Post {
   id: number
   title: string
+  category: PostCategory
   content: string
   likeCount: number
   dislikeCount: number
@@ -287,6 +291,7 @@ export interface AdminPost {
   id: number
   title: string
   content: string
+  category: PostCategory
   status: PostStatus
   likeCount: number
   dislikeCount: number
@@ -299,6 +304,7 @@ export interface AdminPost {
 export interface PostRequest {
   title: string
   content: string
+  category: PostCategory
   status: PostStatus
 }
 

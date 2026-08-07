@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getPost, getPosts, reactToPost } from '../api/endpoints'
-import type { Post, ReactionType } from '../types/api'
+import type { Post, PostCategory, ReactionType } from '../types/api'
 
-export const usePosts = (page: number) =>
+/** category 를 넘기지 않으면 전체 분류. */
+export const usePosts = (page: number, category?: PostCategory) =>
   useQuery({
-    queryKey: ['posts', page],
-    queryFn: () => getPosts(page),
+    queryKey: ['posts', category ?? 'ALL', page],
+    queryFn: () => getPosts(page, 20, category),
   })
 
 /**
