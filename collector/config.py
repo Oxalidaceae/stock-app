@@ -47,3 +47,30 @@ POLICY_BRIEFING_FEEDS = [
         "url": "https://www.fsc.go.kr/about/fsc_bbs_rss/?fid=0111",
     },
 ]
+
+# 수집 실패 알림 웹훅 (텔레그램 / Discord / Slack). 미설정이면 알림을 보내지 않는다.
+#
+# 정책브리핑 RSS 가 죽은 뒤 36일간 아무도 몰랐던 이유가 "실패가 로그에만 남아서"
+# 였다. 로그를 매일 보지 않아도 알 수 있게 외부로 밀어낸다.
+#
+# 텔레그램:  https://api.telegram.org/bot<BOT_TOKEN>/sendMessage
+# Discord:  채널 설정 → 연동 → 웹후크에서 발급한 URL
+# Slack:    인커밍 웹훅 URL
+COLLECTOR_ALERT_WEBHOOK = os.getenv("COLLECTOR_ALERT_WEBHOOK", "").strip()
+
+# 텔레그램에서만 필요한 수신 대화방 ID. 텔레그램은 "URL 하나로 특정 방에 쏘는"
+# 웹훅이 아니라 봇 API 라 받는 쪽을 따로 지정해야 한다.
+# 확인 방법: 봇에게 아무 메시지나 보낸 뒤
+#   curl https://api.telegram.org/bot<BOT_TOKEN>/getUpdates
+# 응답의 result[].message.chat.id 값. (개인 대화는 양수, 그룹은 보통 음수)
+COLLECTOR_ALERT_CHAT_ID = os.getenv("COLLECTOR_ALERT_CHAT_ID", "").strip()
+
+# 연속 몇 회 실패해야 알림을 보낼지. 일시적 네트워크 오류로 알림이 울리면
+# 결국 무시하게 되므로 기본 3회(= 시간당 실행 기준 3시간) 연속일 때만 보낸다.
+#
+# 값이 비어 있거나 숫자가 아니면 기본값으로 떨어진다 — 알림 설정 실수 하나로
+# 컬렉터 전체가 기동조차 못 하는 상황을 만들지 않기 위해서다.
+try:
+    COLLECTOR_ALERT_THRESHOLD = int(os.getenv("COLLECTOR_ALERT_THRESHOLD") or 3)
+except ValueError:
+    COLLECTOR_ALERT_THRESHOLD = 3

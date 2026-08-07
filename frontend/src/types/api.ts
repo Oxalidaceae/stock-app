@@ -126,6 +126,8 @@ export interface SyncStatus {
   records: number | null
   durationMs: number | null
   message: string | null
+  /** 연속 실패 횟수 (0 = 마지막 실행 성공) */
+  consecutiveFailures: number
 }
 
 /* ── Macro Keystats ───────────────────────────────────── */

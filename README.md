@@ -144,6 +144,7 @@ docker-compose run --rm collector-daemon <옵션>
 | `--rss` | 경제 소식(부처 보도자료 RSS) 갱신 |
 | `--backfill --ticker 005930 --start 2020-01-01` | 특정 종목 과거 주가 백필 |
 | `--daemon` | 스케줄러 (매시간 스태거: :00 공시·:20 경제지표·:30 재무지표·:40 100대지표·:50 경제소식 / 주가 16:00 / 재무제표 원본 일 02:00 `--weekly`) |
+| `--test-alert` | 수집 실패 알림 웹훅 설정 확인 (테스트 메시지 1건 발송) |
 
 ### 진단 스크립트 (`collector/scripts/`)
 

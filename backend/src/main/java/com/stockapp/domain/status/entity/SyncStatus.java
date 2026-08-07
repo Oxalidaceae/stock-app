@@ -31,4 +31,8 @@ public class SyncStatus {
 
     @Column(name = "message")
     private String message;
+
+    /** 연속 실패 횟수 (0 = 마지막 실행 성공). 컬렉터가 갱신하며 알림 임계치 판단에 쓰인다. */
+    @Column(name = "consecutive_failures", nullable = false)
+    private int consecutiveFailures;
 }

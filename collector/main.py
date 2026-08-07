@@ -103,7 +103,14 @@ def main():
     parser.add_argument("--start",     type=str, default="2020-01-01", help="백필 시작일 (YYYY-MM-DD)")
     parser.add_argument("--end",       type=str, default=str(date.today()), help="백필 종료일")
     parser.add_argument("--daemon",    action="store_true", help="스케줄러 데몬 실행")
+    parser.add_argument("--test-alert", action="store_true", help="알림 웹훅 설정 확인 (테스트 메시지 1건 발송)")
     args = parser.parse_args()
+
+    # DB 도 API 키도 필요 없다 — 알림 경로만 확인하므로 가장 먼저 처리한다.
+    if args.test_alert:
+        from db.sync_status import send_test_alert
+        send_test_alert()
+        return
 
     if args.init:
         run_initial_setup()

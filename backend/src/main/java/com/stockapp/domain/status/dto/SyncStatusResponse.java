@@ -15,6 +15,7 @@ public class SyncStatusResponse {
     private final Integer records;
     private final Integer durationMs;
     private final String message;
+    private final int consecutiveFailures;
 
     public static SyncStatusResponse from(SyncStatus s) {
         return new SyncStatusResponse(
@@ -23,7 +24,8 @@ public class SyncStatusResponse {
                 s.getStatus(),
                 s.getRecords(),
                 s.getDurationMs(),
-                s.getMessage()
+                s.getMessage(),
+                s.getConsecutiveFailures()
         );
     }
 }
