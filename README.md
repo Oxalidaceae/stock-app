@@ -337,3 +337,22 @@ docker compose --profile init up collector-init   # 초기 데이터 적재
 
 상세 절차(환경 변수·Cloudflare Tunnel·무인 운영·백업·체크리스트)는 **[docs/DEPLOY.md](docs/DEPLOY.md)** 참고.
 초기에는 윈도우 노트북 + Docker Desktop 구성이었고 지금은 리눅스로 이관한 상태라, DEPLOY.md는 1~9장이 윈도우 기준이고 **[10장](docs/DEPLOY.md)** 이 리눅스 이관·운영을 다룬다.
+
+---
+
+## 라이선스
+
+**[PolyForm Strict License 1.0.0](https://polyformproject.org/licenses/strict/1.0.0)** — Copyright (c) 2026 Junsu Seo
+
+소스가 공개돼 있을 뿐 오픈소스가 아니다(source-available). PolyForm 라이선스 계열 중 가장 권한이 좁은 것으로,
+요약하면 **개인적·비상업적 용도로 쓰는 것만 허용**된다:
+
+| | |
+|---|---|
+| 허용 | 열람·학습, 개인적 연구·실험·취미 목적의 사용, 비영리 단체·교육기관·정부기관의 사용 |
+| 불허 | **배포**, **수정 및 2차적 저작물 작성**, 모든 **상업적 이용** |
+
+전문은 **[LICENSE](LICENSE)** 참고. 위 범위를 넘는 이용은 jipyopage@gmail.com 으로 문의할 것.
+
+DART·한국은행 ECOS·KRX 등 외부 출처의 원자료는 각 제공자의 이용 조건을 따르며 이 라이선스의 대상이 아니다.
+이 저장소와 서비스의 내용은 투자 조언이 아니다.
