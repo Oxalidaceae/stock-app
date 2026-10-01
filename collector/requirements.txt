@@ -4,5 +4,6 @@ psycopg2-binary>=2.9
 pandas>=2.2
 python-dotenv>=1.0
 schedule>=1.2
-SQLAlchemy>=2.0
+# 2.1 은 기본 드라이버·동작이 바뀐 메이저급 변경이라, 검증 전까지 운영에서 돌던 2.0 계열로 묶는다
+SQLAlchemy>=2.0,<2.1
 feedparser>=6.0
