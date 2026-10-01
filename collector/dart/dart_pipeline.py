@@ -77,11 +77,21 @@ def sync_disclosures(days_back: int = 1):
 
     ticker_to_id = _get_ticker_to_id_map()
     records = []
+    seen_rcept_nos = set()
     for item in items:
+        # 목록은 최신순이라, 페이지를 넘기는 사이 새 공시가 올라오면 한 칸씩 밀려
+        # 앞 페이지 끝의 공시가 다음 페이지 첫머리에 또 나온다. 한 upsert 문에 같은
+        # rcept_no 가 두 번 들어가면 PostgreSQL 이 CardinalityViolation("cannot
+        # affect row a second time")으로 문 전체를 거부하므로 한 번만 남긴다.
+        rcept_no = item.get("rcept_no", "")
+        if rcept_no in seen_rcept_nos:
+            continue
+        seen_rcept_nos.add(rcept_no)
+
         corp_code = item.get("corp_code", "")
         records.append({
             "company_id":      ticker_to_id.get(corp_code),
-            "rcept_no":        item.get("rcept_no", ""),
+            "rcept_no":        rcept_no,
             "report_name":     item.get("report_nm", ""),
             "disclosure_type": _classify_disclosure(item.get("report_nm", "")),
             "rcept_date":      _parse_date(item.get("rcept_dt")),
@@ -90,7 +100,11 @@ def sync_disclosures(days_back: int = 1):
         })
 
     if not records:
+        # 주말·연휴에는 공시가 없다. RSS 와 달리 여기서 0건은 DART 가 "조회 결과
+        # 없음(013)" 이라고 직접 답한 경우라 실패가 아니다 — 성공으로 남겨야 상태
+        # 카드의 "마지막 갱신" 이 금요일에 멈춰 고장처럼 보이지 않는다.
         logger.info("신규 공시 없음")
+        record_sync("disclosures", records=0)
         return
 
     with get_session() as session:
@@ -101,7 +115,9 @@ def sync_disclosures(days_back: int = 1):
         )
         session.execute(stmt)
 
-    logger.info(f"공시 동기화 완료: {len(records)}건")
+    dupes = len(items) - len(records)
+    logger.info(f"공시 동기화 완료: {len(records)}건"
+                + (f" (페이지 밀림 중복 {dupes}건 제외)" if dupes else ""))
     _trim_disclosures_to_recent_dates(keep_dates=5)
     record_sync("disclosures", records=len(records))
 
