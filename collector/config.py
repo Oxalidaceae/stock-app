@@ -13,7 +13,11 @@ DB_NAME = os.getenv("DB_NAME", "stockapp")
 DB_USER = os.getenv("DB_USERNAME", "stockapp")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "stockapp")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# 드라이버(psycopg2)를 URL 에 명시한다. 그냥 postgresql:// 이면 SQLAlchemy 가 버전별
+# 기본 드라이버를 고르는데, 2.1 부터 기본값이 psycopg(3)로 바뀌었다. 이미지를 다시
+# 빌드하다 2.1 이 깔리자 설치돼 있지도 않은 psycopg 를 찾다가 기동 직후 죽는 일이
+# 실제로 있었다(2026-10-02).
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 DART_BASE_URL = "https://opendart.fss.or.kr/api"
 ECOS_BASE_URL = "https://ecos.bok.or.kr/api"
