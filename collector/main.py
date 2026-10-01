@@ -2,6 +2,7 @@ import schedule
 import time
 import logging
 import argparse
+import functools
 import os
 from logging.handlers import TimedRotatingFileHandler
 from datetime import date
@@ -91,6 +92,31 @@ def run_weekly():
     logger.info("=== 주간 재무제표 동기화 완료 ===")
 
 
+def _guarded(func, job_name: str | None = None):
+    """스케줄 작업 하나가 예외를 던져도 데몬이 죽지 않게 감싼다.
+
+    schedule 은 작업의 예외를 잡지 않고 run_pending() 밖으로 그대로 던진다. 그러면
+    메인 루프가 끝나 프로세스가 죽고, restart: unless-stopped 로 다시 뜨면서 작업
+    시각이 새로 잡힌다. 이때 같은 시각에 도래해 있던 작업은 다음 주기로 밀린다 —
+    일요일 02:00 은 공시(:00)가 주간 재무제표보다 먼저 도는데, 공시가 죽으면 재기동
+    시점엔 02:00 이 이미 지나 있어 주간 작업이 한 주를 통째로 건너뛴다.
+
+    잡은 예외는 sync_status 에 실패로 남긴다. 지금까지는 재시작 횟수에라도 흔적이
+    남았는데, 그마저 로그 한 줄로 묻히면 안 되기 때문 — 연속 실패 알림이 그대로
+    동작한다. job_name 이 없는 작업(주간 배치)은 로그에만 남는다.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.exception(f"스케줄 작업 실패 [{func.__name__}] — 데몬은 계속 실행")
+            if job_name:
+                from db.sync_status import record_sync
+                record_sync(job_name, status="failed", message=f"{type(e).__name__}: {e}"[:500])
+    return wrapper
+
+
 def main():
     parser = argparse.ArgumentParser(description="Stock App Data Collector")
     parser.add_argument("--init",      action="store_true", help="초기 데이터 전체 적재")
@@ -153,18 +179,19 @@ def main():
         logger.info(f"스케줄러 데몬 시작 (현재 시각: {datetime.now()})")
 
         # 매시간, 10분 간격으로 스태거 — 작업이 동시에 몰리지 않게 부하 분산
-        schedule.every().hour.at(":00").do(sync_disclosures, days_back=1)      # 공시
-        schedule.every().hour.at(":20").do(sync_all_indicators, years_back=1)  # 경제지표 시계열
-        schedule.every().hour.at(":30").do(calculate_financial_metrics)        # 재무지표 계산
-        schedule.every().hour.at(":40").do(sync_macro_keystats)                # 100대 통계지표
-        schedule.every().hour.at(":50").do(sync_policy_briefings)              # 경제 소식 RSS
+        # 모든 작업은 _guarded 로 감싼다 — 하나가 예외를 던져도 데몬 전체가 죽지 않게.
+        schedule.every().hour.at(":00").do(_guarded(sync_disclosures, "disclosures"), days_back=1)          # 공시
+        schedule.every().hour.at(":20").do(_guarded(sync_all_indicators, "ecos_indicators"), years_back=1)  # 경제지표 시계열
+        schedule.every().hour.at(":30").do(_guarded(calculate_financial_metrics, "financial_metrics"))      # 재무지표 계산
+        schedule.every().hour.at(":40").do(_guarded(sync_macro_keystats, "macro_keystats"))                 # 100대 통계지표
+        schedule.every().hour.at(":50").do(_guarded(sync_policy_briefings, "policy_briefings"))             # 경제 소식 RSS
 
         # 일별 주가는 KRX 종가(EOD) — 장 마감(15:30) + FDR 15~20분 지연 고려해 하루 1회만
         # (장중 시간당 갱신은 종가 미확정이라 무의미)
-        schedule.every().day.at("16:00").do(sync_daily_prices)                 # 일별 주가
+        schedule.every().day.at("16:00").do(_guarded(sync_daily_prices, "daily_prices"))                    # 일별 주가
 
         # 재무제표 '원본' 배치는 DART 일일 한도(10,000콜)·소요시간(~30분) 때문에 매시간 불가 → 주 1회 유지
-        schedule.every().sunday.at("02:00").do(run_weekly)                     # 재무제표 원본 + 재무지표 재계산
+        schedule.every().sunday.at("02:00").do(_guarded(run_weekly))                                        # 재무제표 원본 + 재무지표 재계산
 
         # 데몬 부팅 직후 한 번 실행해서 DB 비어있어도 즉시 채움
         try:
